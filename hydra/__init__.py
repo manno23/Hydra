@@ -1,6 +1,7 @@
 import struct
 from pygame import midi
 from hydra.graphics import *
+from hydra.midihandler import MidiHandler
 from hydra.network import *
 
 
@@ -13,6 +14,7 @@ rot_matrix = (gl.GLfloat * 16)(*initial_matrix)
 
 def run_server():
     extended_loop = NetworkExtendedEventLoop(ADDRESS)
+    midi_handler = MidiHandler()
     pyglet.app.event_loop = extended_loop
     window = pyglet.window.Window(resizable=True)
 
@@ -32,9 +34,16 @@ def run_server():
 
     @extended_loop.event
     def on_packets_available(data):
-        global rot_matrix, device
+        global rot_matrix
+        if type == 1.0:
+            out = struct.unpack('!ff', data)[1]
+            midi_handler.handle(type, out=out)
+        elif type == 2.0:
+            out = struct.unpack('!fffffffffffffffff', data)[1:]
+            rot_matrix = (gl.GLfloat * len(out))(*out)
+            x, y, z = rot_mat_to_angle(rot_matrix)
+            midi_handler.handle(type, x=x, y=y, z=z)
 
-        print type
 
 
 
@@ -63,6 +72,4 @@ def run_server():
     pyglet.app.run()
 
 if __name__ == "__main__":
-    midi.init()
-    device = midi.Output(4)
     run_server()

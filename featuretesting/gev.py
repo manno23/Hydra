@@ -51,7 +51,7 @@ class NetworkSimulator(gevent.Greenlet):
         while True:
             message = self.pitchvalues.popleft()
             midi.buffer.put(self.pitchvalues.popleft())
-            gevent.sleep(random.randrange(0,1)*0.1)
+            gevent.sleep(0.05)
 
 midi = MidiInterface()
 net = NetworkSimulator()

@@ -1,29 +1,42 @@
 import struct
-import pyglet
-from pyglet.gl import *
-from hydra.graphics import Rectangle
-from hydra.network import NetworkExtendedEventLoop
+from pygame import midi
+from hydra.graphics import *
+from hydra.network import *
 
 
 __author__ = 'manno23'
 
-ADDRESS = ("10.1.1.9", 5555)
+ADDRESS = ("10.1.1.7", 5555)
 initial_matrix = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
 rot_matrix = (gl.GLfloat * 16)(*initial_matrix)
+
 
 def run_server():
     extended_loop = NetworkExtendedEventLoop(ADDRESS)
     pyglet.app.event_loop = extended_loop
     window = pyglet.window.Window(resizable=True)
 
+    # Setup OpenGL scene
+    glClearColor(1, 1, 1, 1)
+    glEnable(GL_DEPTH_TEST)
+    glEnable(GL_CULL_FACE)
+
+    # Define a simple function to create ctypes arrays of floats:
+    def vec(*args):
+        return (GLfloat * len(args))(*args)
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.5, 0, 0.3, 1))
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, vec(1, 1, 1, 1))
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 50)
     rect = Rectangle(2, 4, 1)
 
     @extended_loop.event
     def on_packets_available(data):
-        global rot_matrix
-        if len(data) is 17 * 4:
-            out = struct.unpack('!fffffffffffffffff', data)[1:]
-            rot_matrix = (gl.GLfloat * len(out))(*out)
+        global rot_matrix, device
+
+        print type
+
+
 
     @window.event
     def on_resize(width, height):
@@ -50,4 +63,6 @@ def run_server():
     pyglet.app.run()
 
 if __name__ == "__main__":
+    midi.init()
+    device = midi.Output(4)
     run_server()

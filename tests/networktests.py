@@ -4,7 +4,7 @@ import unittest
 import gevent
 import pyglet
 
-from hydra.hydra.network import NetworkExtendedEventLoop
+from hydra.network import NetworkExtendedEventLoop
 
 
 __author__ = 'manno23'

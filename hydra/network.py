@@ -30,12 +30,12 @@ class NetworkExtendedEventLoop(app.EventLoop):
         self.t.start()
 
     def idle(self):
-        self.dispatch_event('poll_midi_events')
+        self.dispatch_event('on_midi_events_available')
         while not self.msg_queue.empty():
             self.dispatch_event('on_packets_available', self.msg_queue.get_nowait())
         return app.EventLoop.idle(self)
 NetworkExtendedEventLoop.register_event_type('on_packets_available')
-NetworkExtendedEventLoop.register_event_type('poll_midi_events')
+NetworkExtendedEventLoop.register_event_type('on_midi_events_available')
 
 
 class UDPRequestHandler(SocketServer.ThreadingMixIn,SocketServer.DatagramRequestHandler):

@@ -72,7 +72,7 @@ class MyTestCase(unittest.TestCase):
         self.midi_simulator.note_on(36, 120, 0)
         self.midi_simulator.note_off(36, 100, 0)
         time.wait(MIDI_TO_BUFFER_DELAY)
-        self.cm.poll_midi_events()
+        self.cm.handle_midi()
 
         connection_response = self.msg_queue.get(timeout=2) #we can ignore
         midi_response = self.msg_queue.get(timeout=2)
@@ -99,7 +99,7 @@ class MyTestCase(unittest.TestCase):
         # Channel 1 is our instrument channel, note 1 signals activating a client
         self.midi_simulator.note_on(121, 100, 1)
         time.wait(MIDI_TO_BUFFER_DELAY)
-        self.cm.poll_midi_events()
+        self.cm.handle_midi()
 
         self.assertEqual(len(self.cm.available_clients), NUM_CLIENTS-1)
         self.assertEqual(len(self.cm.active_clients), 1)
@@ -114,7 +114,7 @@ class MyTestCase(unittest.TestCase):
         #Make it active for channel 1 using instrument 1
         self.midi_simulator.note_on(121, 100, 1)
         time.wait(MIDI_TO_BUFFER_DELAY)
-        self.cm.poll_midi_events()
+        self.cm.handle_midi()
 
         #Deactivate the client and send a message to it
         self.midi_simulator.note_off(126, 100, 1)
@@ -139,7 +139,7 @@ class MyTestCase(unittest.TestCase):
         self.midi_simulator.note_off(0, 100, 1)
 
         time.wait(MIDI_TO_BUFFER_DELAY)
-        self.cm.poll_midi_events()
+        self.cm.handle_midi()
 
         # notes should be in ascending order
         self.assertEqual(self.cm.midi_handler.channel_instrument[1].notes_available, [52, 68, 74])

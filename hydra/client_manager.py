@@ -84,7 +84,7 @@ class ClientManager(object):
 
             self.graphics_handler.on_packets_available(client_id, msg_type, data[2:])
 
-    def poll_midi_events(self):
+    def handle_midi(self):
         """
         Constant handling methods here should be universal across the scenes.
         POV of midi_handler
@@ -92,7 +92,7 @@ class ClientManager(object):
         should handle cases when there are no clients to become active for example
         """
         events = self.midi_handler.poll_midi_events()
-        if events is not None and len(self.client_list) > 0:
+        if len(self.client_list) > 0:  # If there are clients available to send to
 
             for handle_type, message, channel in events:
                 if handle_type is not None:

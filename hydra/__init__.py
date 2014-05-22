@@ -33,8 +33,8 @@ def run_server():
 
 
     @extended_loop.event
-    def poll_midi_events():
-        client_manager.poll_midi_events()
+    def on_midi_events_available():
+        client_manager.handle_midi()
 
 
     @window.event

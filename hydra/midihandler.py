@@ -15,8 +15,9 @@
 import struct
 from pygame import midi
 from pyglet import gl
-import client_manager
 from graphics import rot_mat_to_angle
+from commands import *
+
 
 __author__ = 'Jason'
 
@@ -50,52 +51,58 @@ Channel 1-15: Directs midi messages to the instruments.
 Channel 15: Changes the current scene
 
 """
+
+
 class MidiHandler(object):
     def __init__(self):
         midi.init()
-        self.midi_input = midi.Output(4)
-        self.midi_output = midi.Input(1)
+        self.midi_output = midi.Output(5)
+        self.fake_midi_output_for_testing = midi.Output(4)
+        self.midi_input = midi.Input(1)
 
-        # Create scenes
+        # Index Scenes
         self.scene_list = {}
-        self.scene_list[1] = FountainScene(1, self.midi_input)
+        self.scene_list[0] = NotActiveScene(0)
+        self.scene_list[1] = FountainScene(1)
+        self.scene_list[2] = ConcentricCircleScene(2)
 
+        # Index Instruments
         self.instrument_list = {}
         self.instrument_list[1] = InstrumentFountainScene
+        self.instrument_list[2] = InstrumentKeysScene
 
-        # Maps an instrument to a channel
-        self.channel_instrument = {}
+        self.channel_instruments = {}    # Maps an instrument to a channel
 
-        # Initiate scene 1 to start off with
-        self.current_scene = self.scene_list[1]
-        self.current_scene_id = 1
+        self.current_scene = self.scene_list[0]   # Initialise scene to NotActiveScene
 
-    def change_scene(self, scene_id):
-        try:
-            self.current_scene = self.scene_list[scene_id]
-            self.current_scene_id = scene_id
-        except KeyError:
-            print 'The scene ID [' + str(scene_id) + '] chosen by the midi on channel 0 is not available.'
-            print 'Possible scenes are', self.scene_list
+    def scene_state(self):
+        """
+
+        @return: If a scene is active, detail the current scene ID and its state to the client.
+        If no scene is active, no msg is required.
+        """
+        return self.current_scene.scene_state_message()
 
     def handle_message(self, channel, data):
-        if channel is 0:
-            self.current_scene.handle_client_message(data)
-        else:
-            if self.channel_instrument.has_key(channel):
-                # No error message is thrown here as it is not the result of a midi input error.
-                # Possible scenarios are that the midi has removed the instrument before the client was updated.
-                self.channel_instrument[channel].handle_message(data)
+        if self.channel_instruments.has_key(channel):
+            # No error message is thrown here as it is not the result of a midi input error.
+            # Possible scenarios are that the midi has removed the instrument before the client was updated.
+            self.channel_instruments[channel].handle_message(data, channel)
 
     def poll_midi_events(self):
         """
         Polls the midi message buffer and takes from it 1 message at a time.
-        @return: A byte array in string form containing a message
-                in adherence with the communication policy.
-        """
-        if self.midi_output.poll():
+        Each midi message is then put into a list as a batch job for the client manager,
+        or is used to update the state of the midi instruments and scenes.
 
-            midi_msgs = self.midi_output.read(20)
+        @return: a list of commands for the clientManager. Each command consists of
+        command[0]: type of command
+        command[1]: message to be sent to clients (if neccesary)
+        command[2]: the channel the midi command derived from.
+        """
+        if self.midi_input.poll():
+
+            midi_msgs = self.midi_input.read(20)
             packets = []
             for midi_msg in midi_msgs:
 
@@ -114,68 +121,100 @@ class MidiHandler(object):
                         if data1 > 115:
                             # Change the scene from range 0 - 12
                             scene_id = data1 - 115
-                            self.change_scene(scene_id)
-                            packets.append(
-                                (
-                                    client_manager.UPDATE_ALL_CLIENTS,
-                                    struct.pack('BB', client_manager.SERVER_CHANGE_SCENE, scene_id),
-                                    0
+                            try:
+                                self.change_scene(scene_id)
+                                packets.append(
+                                    CommandChangeScene(
+                                        scene_id,
+                                        self.current_scene.scene_state_message(),
+                                        )
                                 )
-                            )
+                            except KeyError:
+                                print 'The scene ID [' + str(scene_id) + '] chosen by the midi on channel 0 is not available.'
+                                print 'Possible scenes are', self.scene_list
                         else:
-                            packets.append(
-                                self.current_scene.handle_midi(msg_type, channel, data1, data2, data3, timestamp)
-                            )
+                            scene_msg = self.current_scene.handle_midi(msg_type, channel, data1, data2, data3, timestamp)
+                            if scene_msg is not None:
+                                packets.append(
+                                    CommandUpdateClients(
+                                        scene_msg
+                                    )
+                                )
 
                 # Instrument channels
                 else:
 
                     if msg_type is NOTE_ON:
 
-                        # Define notes available to play
-                        if data1 is 126:
+                        if data1 is 128:
+                            #Change the client associated with the instrument on this channel
+
                             try:
+                                instrument = self.channel_instruments[channel]
+                                if instrument is not None:
+                                    packets.append(
+                                        CommandChangeClient(
+                                            channel,
+                                            self.current_scene.id,
+                                            instrument.initial_message()
+                                        )
+                                    )
+                            except KeyError:
+                                print 'Cannot change client on the channel ' + str(channel) + 'when no instrument has been assigned.'
+                                print 'Assign an instrument first from the midi input range 121 - 125.'
+
+                        elif data1 is 127:
+                            print 'removing instrument'
+                            # Remove Instrument from channel
+
+                            try:
+                                print self.channel_instruments
+                                self.channel_instruments.pop(channel)
+                                print self.channel_instruments
+                                print
                                 packets.append(
-                                    (
-                                        client_manager.REMOVE_INSTRUMENT_CLIENT,
-                                        self.current_scene_id,
-                                        channel
+                                    CommandRemoveInstrument(
+                                        channel,
+                                        self.current_scene.id,
+                                        self.current_scene.scene_state_message()
                                     )
                                 )
                             except KeyError:
                                 print 'Cannot remove an instrument if none has been assigned.'
 
-                        elif data1 is 127:
-                            try:
-                                packets.append(
-                                    (
-                                        client_manager.CHANGE_INSTRUMENT_CLIENT,
-                                        (self.current_scene_id, self.channel_instrument[channel].instrument_id),
-                                        channel
-                                    )
-                                )
-                            except KeyError:
-                                print 'Cannot change client on the channel ' + str(channel) + 'when no instrument has been assigned.'
-                                print 'Assign an instrument first from the midi input range 121 - 125.'
-
                         elif data1 > 120:
-                            instrument_id = data1 - 120
-                            self.channel_instrument[channel] = self.new_instrument(instrument_id)
-                            packets.append(
-                                (
-                                    client_manager.ADD_INSTRUMENT_CLIENT,
-                                    instrument_id,
-                                    channel
-                                )
-                            )
+                            # Add Instrument to channel, total of 5 available
 
-                        # send instrument midi to the instrument object to handle
-                        # it must have been created for this to occur
+                            instrument_id = data1 - 120
+                            if instrument_id in self.instrument_list:
+
+                                if (self.channel_instruments.has_key(channel) and
+                                    self.channel_instruments[channel].id is not instrument_id) or \
+                                    not self.channel_instruments.has_key(channel):
+
+                                    print 'asking client manager for a client to control the instrument'
+                                    self.channel_instruments[channel] = self.new_instrument(instrument_id)
+                                    message = self.channel_instruments[channel].initial_message()
+                                    packets.append(
+                                        CommandAddInstrument(
+                                            channel,
+                                            message
+                                        )
+                                    )
+
                         else:
+                            # Update the Instrument
+
                             try:
-                                packets.append(
-                                    self.channel_instrument[channel].handle_midi(msg_type, channel, data1, data2, data3, timestamp)
-                                )
+                                update_message = self.channel_instruments[channel].\
+                                    handle_midi(msg_type, channel, data1, data2, data3, timestamp)
+                                if update_message is not None:
+                                    packets.append(
+                                        CommandUpdateInstrument(
+                                            channel,
+                                            update_message
+                                        )
+                                    )
                             except KeyError:
                                 print 'The instrument has not been created for this channel'
 
@@ -183,11 +222,10 @@ class MidiHandler(object):
             return packets
 
         else:
-            # No midi message in the buffer
-            return None
+            return None  # No midi message in the buffer
 
-    def get_scene_state(self):
-        return self.current_scene.create_client_initialisation_message()
+    def change_scene(self, scene_id):
+        self.current_scene = self.scene_list[scene_id]
 
     def new_instrument(self, instrument_type):
         """
@@ -195,11 +233,10 @@ class MidiHandler(object):
         type.
         @return: Instrument object
         """
-        return self.instrument_list[instrument_type](instrument_type, self.midi_input)
+        return self.instrument_list[instrument_type](instrument_type, self.midi_output)
 
-    def select_midi_ports(self):
-        return midi.Input(1), midi.Output(4)
-
+    def get_instrument_state(self, channel):
+        self.channel_instruments.get(channel).initial_message()
 
 
 class Scene(object):
@@ -215,14 +252,13 @@ class Scene(object):
     The current state of the scene must be maintained here so that all clients
     are reflecting the same model despite their own state.
     """
-    def _init__(self, scene_id, midi_input):
+    def __init__(self, scene_id):
         """
         Default constructor.
         @param scene_id: The ID for the scene that is agreed upon by the clients in the policy.
         @param midi_input: Writes to the virtual midi instrument buffer.
         """
-        pass
-
+        self.id = scene_id
     def handle_midi(self, msg_type, channel, data1, data2, data3, timestamp):
         """
 
@@ -247,26 +283,30 @@ class Scene(object):
                  the selected clients.
         """
         pass
-
-    def create_current_state_message(self):
+    def scene_state_message(self):
         """
         Compiles all the state of the object and prepares it as a
         message ready for communicating.
-        @return: a byte array in string form for sending from a socket
+        @return: a byte array of the form
+         byte[0]: scene id
+         byte[1]+: the state of the scene in a form that is detailed in the shared policy
         """
         pass
 
-
 # Example Scenes
+class NotActiveScene(Scene):
+    def handle_midi(self, msg_type, channel, data1, data2, data3, timestamp):
+        return None
+    def scene_state_message(self):
+        return struct.pack('B', self.id)
+
 class FountainScene(Scene):
-    def __init__(self, scene_id, midi_input):
-        self.scene_id = scene_id
-        self.midi_input = midi_input
+    def __init__(self, scene_id):
+        Scene.__init__(self, scene_id)
 
         # Fountain Scene state determined by incoming
-        self.background_white = True
-        self.fountain_speed = 15
-
+        self.background_white = 1
+        self.fountain_speed = 150
     def handle_midi(self, msg_type, channel, data1, data2, data3, timestamp):
         """
         Kick = []
@@ -292,35 +332,42 @@ class FountainScene(Scene):
         # Messages for all clients
             self.background_white = not self.background_white
             if self.background_white:
-                return client_manager.UPDATE_ALL_CLIENTS,\
-                       struct.pack('BBB', client_manager.SERVER_SCENE_UPDATE, 0, 0),\
-                       channel
+                return struct.pack('BBB', SERVER_SCENE_UPDATE, 0, 0)
             else:
-                return client_manager.UPDATE_ALL_CLIENTS,\
-                       struct.pack('BBB', client_manager.SERVER_SCENE_UPDATE, 0, 1),\
-                       channel
+                return struct.pack('BBB', SERVER_SCENE_UPDATE, 0, 1)
 
         elif msg_type is PITCH_BEND:
             self.fountain_speed = data2
-            return client_manager.UPDATE_ALL_CLIENTS,\
-                   struct.pack('BBB', client_manager.SERVER_SCENE_UPDATE, 1, data2),\
-                   channel
+            return struct.pack('BBB', SERVER_SCENE_UPDATE, 1, data2)
 
         else:
-            return None, None, None
-
-    def create_client_initialisation_message(self):
-        return struct.pack('BBBB',
-                           client_manager.SERVER_CONFIRM_CONNECT,               # connection
-                           self.scene_id,           # initial scene
-                           int(self.background_white),
-                           int(self.fountain_speed)
+            return None
+    def scene_state_message(self):
+        return struct.pack('BBB',
+                           self.id,           # initial scene
+                           self.background_white,
+                           self.fountain_speed
         )
+
+class ConcentricCircleScene(Scene):
+    def __init__(self, scene_id):
+        Scene.__init__(self, scene_id)
+        self.MSG_HIT = 1
+    def handle_midi(self, msg_type, channel, data1, data2, data3, timestamp):
+        if msg_type is NOTE_ON:
+            if data1 is 40:
+                return struct.pack('B', self.MSG_HIT)
+        return None
+    def scene_state_message(self):
+        return struct.pack('B', self.id)
 
 
 class Instrument(Scene):
+    def __init__(self, instrument_id, midi_output):
+        Scene.__init__(self, instrument_id)
+        self.midi_output = midi_output
 
-    def handle_client_message(self, data):
+    def handle_message(self, data, channel):
         """
         Converts the scene specific message sent from the client
         to a midi message to be output to the port.
@@ -329,17 +376,15 @@ class Instrument(Scene):
         """
         pass
 
-
 # Example Instruments
 class InstrumentFountainScene(Instrument):
 
-    def __init__(self, instrument_id, midi_input):
-        self.instrument_id = instrument_id
-        self.midi_input = midi_input
+    def __init__(self, instrument_id, midi_output):
+        Instrument.__init__(self, instrument_id, midi_output)
         self.adding_notes = False
         self.notes_available = []
 
-    def handle_client_message(self, data):
+    def handle_message(self, data, channel):
 
         melody_player = 1
         volume_control = 2
@@ -375,15 +420,76 @@ class InstrumentFountainScene(Instrument):
         if msg_type is NOTE_ON:
 
             # Can now add notes
-            if data1 is 0:
-                self.adding_notes = not self.adding_notes
-            else:
+            if data1 is 0 and not self.adding_notes:
+                self.adding_notes = True
+            elif data1 is 0 and self.adding_notes:
+                return struct.pack('B', len(self.notes_available))
+            elif self.adding_notes:
                 self.notes_available.append(data1)
                 self.notes_available.sort()
 
-    def create_current_state_message(self):
+    def initial_message(self):
         return struct.pack('BB',
-                           client_manager.SERVER_CONFIRM_CONNECT,
-                           self.instrument_id
+                           SERVER_CONFIRM_CONNECT,
+                           self.id
         )
 
+class InstrumentKeysScene(Instrument):
+
+    def __init__(self, instrument_id, midi_output):
+        Instrument.__init__(self, instrument_id, midi_output)
+        #InstrumentKeys message types
+        self.UPDATE_NOTES = 1
+
+        self.adding_notes = False
+        self.note_list = []
+        self.note_list_buffer = []
+
+    def handle_message(self, data, channel):
+        note, note_on = struct.unpack('BB', data)
+
+        if note_on:
+            print '>>>>> note on', note
+            self.midi_output.note_on(
+                self.note_list[note],
+                100,
+                channel
+            )
+        else:
+            print '>>>>> note off', note
+            self.midi_output.note_off(
+                self.note_list[note],
+                0,
+                channel
+            )
+
+    def handle_midi(self, msg_type, channel, data1, data2, data3, timestamp):
+        if msg_type is NOTE_ON:
+
+            if data1 is 1 and self.adding_notes is False:      # Begin adding notes to the allowable notes
+                print 'instrument keys adding notes!'
+                self.note_list_buffer = []
+                self.adding_notes = True
+
+            elif data1 is 1 and self.adding_notes is True:
+                print 'instrument keys sending new notes!'
+                print
+                # Send message of the notes being used to the client
+                self.adding_notes = False
+                self.note_list = self.note_list_buffer
+                return struct.pack('BBB', self.id, self.UPDATE_NOTES, len(self.note_list))
+
+            elif self.adding_notes is True:
+                print 'instrument keys added a note', data1
+                self.note_list_buffer.append(data1)
+                self.note_list_buffer.sort()
+
+            return None
+
+    def initial_message(self):
+        '''
+        The keyboard is initialised with no keys selected
+        '''
+        return struct.pack('B',
+                           self.id,
+        )

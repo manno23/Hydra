@@ -15,31 +15,26 @@ from hydra.network import *
 __author__ = 'manno23'
 
 
-
 def run_server():
 
-    graphics_handler = GraphicsHandler()
-    client_manager = ClientManager(graphics_handler)
+    gh = GraphicsHandler()
+    cm = ClientManager(gh)
     extended_loop = NetworkExtendedEventLoop()
 
     pyglet.app.event_loop = extended_loop
     window = pyglet.window.Window(resizable=True)
 
-
-
     @extended_loop.event
     def on_packets_available(packet):
-        client_manager.handle_message(packet)
-
+        cm.handle_message(packet)
 
     @extended_loop.event
     def on_midi_events_available():
-        client_manager.handle_midi()
-
+        cm.handle_midi()
 
     @window.event
     def on_resize(width, height):
-        graphics_handler.on_resize(width, height)
+        gh.on_resize(width, height)
         return pyglet.event.EVENT_HANDLED
 
     def update(rt):
@@ -48,7 +43,7 @@ def run_server():
 
     @window.event
     def on_draw():
-        graphics_handler.on_draw()
+        gh.on_draw()
 
     pyglet.app.run()
 

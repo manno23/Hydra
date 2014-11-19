@@ -1,9 +1,9 @@
-
+print('@@@@ client_manager')
 import socket
 import struct
 from collections import namedtuple
-from hydra.midihandler import MidiHandler
-from commands import *
+from hydra.midi_handler import MidiHandler
+from hydra.commands import *
 
 
 client = namedtuple('client', ['id', 'address'])
@@ -30,18 +30,29 @@ class ClientManager(object):
       interface to send and receive the messages from
     """
 
-    def __init__(self, graphics_handler):
-        self.graphics_handler = graphics_handler
+    def __init__(self):
         self.midi_handler = MidiHandler()
-        self.client_list = {}  # Maps the clients ID to it's information
+        '''
+        No need to baby user, can create wiki with how to setup virtual
+        ports and direct them to the log files that are available to them
+        It will not have debug level logging, only above.
+        '''
+
+        # Maps the clients ID to it's information
+        self.client_list = {}  
+
+        # Maps the client
         self.instrument_map = InstrumentMapping()
-        self.available_clients = []  # A list of the client ID's that are unassigned
+
+        # A list of the client ID's that are unassigned
+        self.available_clients = []
 
     def handle_message(self, message):
         """
 
         @param message:
         """
+        print("handling a message", message)
         request = message[0]
         client_address = message[1]
         data = request[0]
@@ -57,11 +68,11 @@ class ClientManager(object):
                 if client_id not in self.client_list:
                     self.client_list[client_id] = client(client_id, (client_address[0], 5555))
                     self.available_clients.append(client_id)
-            print 'added client'
-            print self.client_list
-            print self.available_clients
-            print self.instrument_map.channels
-            print
+            print ('added client')
+            print (self.client_list)
+            print (self.available_clients)
+            print (self.instrument_map.channels)
+            print()
 
         # Disconnect
         if msg_type is CLIENT_DISCONNECT:
@@ -96,14 +107,14 @@ class ClientManager(object):
 
                 else:
                     # With no clients to replace it with we can leave it be
-                    print 'D: No clients available to represent the instrument'
+                    print ('D: No clients available to represent the instrument')
 
 
-            print 'removed client'
-            print self.client_list
-            print self.available_clients
-            print self.instrument_map.channels
-            print
+            print ('removed client')
+            print (self.client_list)
+            print (self.available_clients)
+            print (self.instrument_map.channels)
+            print ()
 
         # Maintaining connection state
         if msg_type is CLIENT_CHECK_CONNECTION:
@@ -111,119 +122,130 @@ class ClientManager(object):
 
         # Only scene specific messages are passed through here
         if msg_type is CLIENT_INSTRUMENT_MESSAGE:
-            print "clientID:", client_id, 'channel', self.instrument_map.get_channel(client_id)
+            print ("clientID:", client_id,
+                   'channel', self.instrument_map.get_channel(client_id))
             if client_id in self.instrument_map.clients:
                 channel = self.instrument_map.get_channel(client_id)
                 self.midi_handler.handle_message(channel, data[2:])
 
-            self.graphics_handler.on_packets_available(client_id, msg_type, data[2:])
+# self.graphics_handler.on_packets_available(client_id, msg_type, data[2:])
 
     def handle_midi(self):
         """
         Constant handling methods here should be universal across the scenes.
         POV of midi_handler
-        There is never any knowledge of the state of the clients, client_manager
-        should handle cases when there are no clients to become active for example
+        There is never any knowledge of the state of the clients,
+        client_manager should handle cases when there are no clients to become
+        active for example
         """
         commands = self.midi_handler.poll_midi_events()
-        if commands is not None and len(self.client_list) > 0:  # If there are clients available to send to
 
-            for command in commands:
+        if commands is None or len(self.client_list) is 0:
+            return
 
-                if isinstance(command, CommandChangeScene):
+        for command in commands:
 
-                    for client_id in self.available_clients:
-                        socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                            sendto(command.message, self.client_list[client_id].address)
-                    print 'changing scene for clients', self.available_clients
-                    print
+            if isinstance(command, CommandChangeScene):
 
+                for client_id in self.available_clients:
+                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM).\
+                        sendto(command.message,
+                               self.client_list[client_id].address)
+                print ('changing scene for clients',
+                       self.available_clients)
 
-                elif isinstance(command, CommandUpdateClients):
+            elif isinstance(command, CommandUpdateClients):
 
-                    for client_id in self.available_clients:
-                        socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                            sendto(command.message, self.client_list[client_id].address)
-                    print 'updating scene for clients', self.available_clients
-                    print
+                for client_id in self.available_clients:
+                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
+                        sendto(command.message, self.client_list[client_id].address)
+                print ('updating scene for clients', self.available_clients)
 
+            elif isinstance(command, CommandAddInstrument):
 
-                elif isinstance(command, CommandAddInstrument):
+                print ('adding instrument cm')
+                if command.channel not in self.instrument_map.channels:
+                    selected_client_id = self.available_clients.pop()
+                    self.instrument_map.add(selected_client_id, command.channel)
+                    print ('added instrument to client')
+                    print (self.client_list)
+                    print (self.available_clients)
+                    print (self.instrument_map.channels)
+                    print()
 
-                    print 'adding instrument cm'
-                    if command.channel not in self.instrument_map.channels:
-                        selected_client_id = self.available_clients.pop()
-                        self.instrument_map.add(selected_client_id, command.channel)
-                        print 'added instrument to client'
-                        print self.client_list
-                        print self.available_clients
-                        print self.instrument_map.channels
-                        print
-
-                        socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                            sendto(command.message, self.client_list[selected_client_id].address)
-
-
-                elif isinstance(command, CommandRemoveInstrument):
-
-                    print 'removing instrument cm'
-                    if command.channel in self.instrument_map.channels:
-                        deactivating_client_id = self.instrument_map.get_client_id(command.channel)
-                        self.instrument_map.remove_channel(command.channel)
-                        self.available_clients.insert(0, deactivating_client_id)
-                        print 'Removing instrument from client', deactivating_client_id
-                        print self.client_list
-                        print self.available_clients
-                        print self.instrument_map.channels
-                        print
-
-                        socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                            sendto(command.message, self.client_list[deactivating_client_id].address)
+                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
+                        sendto(command.message, self.client_list[selected_client_id].address)
 
 
-                elif isinstance(command, CommandChangeClient):
+            elif isinstance(command, CommandRemoveInstrument):
 
-                    if command.channel in self.instrument_map.channels:
-                        deactivating_client_id = self.instrument_map.get_client_id(command.channel)
-                        self.instrument_map.remove_channel(command.channel)
-                        self.available_clients.insert(0, deactivating_client_id)
+                print ('removing instrument cm')
+                if command.channel in self.instrument_map.channels:
+                    deactivating_client_id = self.instrument_map.get_client_id(command.channel)
+                    self.instrument_map.remove_channel(command.channel)
+                    self.available_clients.insert(0, deactivating_client_id)
+                    print ('Removing instrument from client', deactivating_client_id)
+                    print (self.client_list)
+                    print (self.available_clients)
+                    print (self.instrument_map.channels)
+                    print()
 
-                        socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                            sendto(command.remove_message, self.client_list[deactivating_client_id].address)
+                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
+                        sendto(command.message, self.client_list[deactivating_client_id].address)
 
-                    if command.channel not in self.instrument_map.channels:
-                        selected_client_id = self.available_clients.pop()
-                        self.instrument_map.add(selected_client_id, command.channel)
+            elif isinstance(command, CommandChangeClient):
 
-                        socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                            sendto(command.add_message, self.client_list[selected_client_id].address)
+                if command.channel in self.instrument_map.channels:
+                    deactivating_client_id = \
+                        self.instrument_map.get_client_id(command.channel)
+                    self.instrument_map.remove_channel(command.channel)
+                    self.available_clients.insert(0,
+                                                  deactivating_client_id)
 
+                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
+                        sendto(command.remove_message,
+                               self.client_list[deactivating_client_id].
+                               address)
 
-                elif isinstance(command, CommandUpdateInstrument):
+                if command.channel not in self.instrument_map.channels:
+                    selected_client_id = self.available_clients.pop()
+                    self.instrument_map.add(selected_client_id,
+                                            command.channel)
 
-                    if command.channel in self.instrument_map.channels:
-                        client_id = self.instrument_map.get_client_id(command.channel)
-                        socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                            sendto(command.message, self.client_list[client_id].address)
-                        print 'updating client', client_id
-                        print
+                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
+                        sendto(command.add_message,
+                               self.client_list[selected_client_id].address
+                               )
+
+            elif isinstance(command, CommandUpdateInstrument):
+
+                if command.channel in self.instrument_map.channels:
+                    client_id = \
+                        self.instrument_map.get_client_id(command.channel)
+                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
+                        sendto(command.message, self.client_list[client_id].address)
+                    print ('updating client', client_id)
 
 
 class InstrumentMapping():
     def __init__(self):
         self.channels = {}
         self.clients = {}
+
     def add(self, client_id, channel):
         self.channels[channel] = client_id
         self.clients[client_id] = channel
+
     def get_channel(self, client_id):
         return self.clients[client_id]
+
     def get_client_id(self, channel):
         return self.channels[channel]
+
     def remove_channel(self, channel):
         client_id = self.channels.pop(channel)
         self.clients.pop(client_id)
+
     def remove_client_id(self, client_id):
         channel = self.clients.pop(client_id)
         self.channels.pop(channel)
-

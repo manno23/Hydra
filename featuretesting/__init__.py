@@ -1,7 +1,9 @@
+#interface to the hydra package
+#setup install should produce a package hydra
+from daemon import *
+
 '''
-interface to the hydra package
-setup install should produce a package hydra
-hydra will include
+hydra will include 
  - the hydra daemon => run(), non blocking allows other functions to be called
 
  - socket server -> receiving/sending
@@ -22,11 +24,5 @@ Methods for creating virtual midi ports: (Also describe default functionality if
 LINUX: amidi -p <NAME> : creates a virtual midi port if it is not yet already
                         then use -s to send
                                 -d to receive
-        sudo modprobe snd-virmidi: gives you virtual midi ports to play with!!
-
 WINDOWS: BeLoop (torrents - or wherever)
 OSX:
-'''
-
-print('@@@@@ __init__')
-from .app import run, close

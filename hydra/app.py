@@ -12,7 +12,7 @@
 
 '''
 import sys
-import asyncio
+import queue
 import threading
 import socketserver
 import pyportmidi
@@ -31,35 +31,26 @@ def run():
 
     pyportmidi.init()
 
-    def tha_loop():
+    while True:
+        try:
+            # Get items off the network queue
+            try:
+                client_manager.handle_message(msg_queue.get_nowait())
+            except queue.Empty:
+                pass
 
-        cm = client_manager.ClientManager()
-        print('entering tha loop')
+            # Get items from the midi buffer
+            client_manager.handle_midi()
 
-        while True:
 
-            # Get items off the queue
-            for _ in range(32):
-                try:
-                    cm.handle_message(msg_queue.get_nowait())
-                except:
-                    break
-
-            cm.handle_midi()
-
-            asyncio.sleep(0.00001)
-
-    task = asyncio.async(tha_loop())
-    try:
-        loop.run_until_complete(task)
-    except KeyboardInterrupt:
-        pass
+        except KeyboardInterrupt:
+            break
 
 
 def close():
-    loop.close()
-    server.close()
-    pass
+    server.server_close()
+    server.shutdown()
+    client_manager.close()
 
 
 class UDPRequestHandler(socketserver.ThreadingMixIn,
@@ -79,6 +70,5 @@ class MyServer(socketserver.UDPServer):
         self.allow_reuse_address = True
         self.msg_queue = args[2]
 
-loop = asyncio.get_event_loop()
-msg_queue = asyncio.queues.Queue()
+msg_queue = queue.Queue()
 server = MyServer(ADDRESS, UDPRequestHandler, msg_queue)

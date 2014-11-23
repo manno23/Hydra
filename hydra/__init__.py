@@ -28,5 +28,7 @@ WINDOWS: BeLoop (torrents - or wherever)
 OSX:
 '''
 
-print('@@@@@ __init__')
-from .app import run, close
+__version__ = '0.1'
+__author__ = 'Jason Manning'
+
+from hydra.hyas import run, stop

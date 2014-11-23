@@ -1,0 +1,58 @@
+IMPORTANT PORT INFORMATION-
+	YOU HAVE TO LEARN ALL THIS SHIT GOOD YOU LIL NIGGA
+
+
+PortMidi will not allow us to control the virtual ports, 
+we can ONLY CONNECT TO THEM FROM USER SPACE.
+
+Only specific MIDI-THRU ports that exist in the kernel can be used to write to one
+of our own inputs.
+
+PortMidi MIRRORS the kernel midi ports with it's own, and connects to to them.
+
+POSITIVES OF THIS!!!! ===>>> we can use all the virtual ports within hydra in order to 
+	reduce latency. We are not stealing ports from the kernel, just merely creating new
+	and connecting to them :D
+
+Example:
+>>> midi.Input(3)
+>>> midi.Output(4)
+
+
+14  24  25   MIRRORS   0\1  2\3  4\5
+
+
+Input(3) is connectd to from that port. (in this case 24)
+
+client 0: 'System' [type=kernel]
+    0 'Timer           '
+    1 'Announce        '
+client 14: 'Midi Through' [type=kernel]
+    0 'Midi Through Port-0'
+client 24: 'Virtual Raw MIDI 2-0' [type=kernel]
+    0 'VirMIDI 2-0     '
+	Connecting To: 128:3[real:0]
+client 25: 'Virtual Raw MIDI 2-1' [type=kernel]
+    0 'VirMIDI 2-1     '
+	Connected From: 128:4
+client 26: 'Virtual Raw MIDI 2-2' [type=kernel]
+    0 'VirMIDI 2-2     '
+client 27: 'Virtual Raw MIDI 2-3' [type=kernel]
+    0 'VirMIDI 2-3     '
+client 128: 'Client-128' [type=user]
+    3 'port-3          '
+	Connected From: 24:0[real:0]
+    4 'port-4          '
+	Connecting To: 25:0
+
+amidi/aconnect will not allow to make connections between user/kernal ports, 
+or connect user/user ports.
+ONLY kernel/kernel.
+
+
+
+########## Therefore in testing we have to simulate an external application
+SIMULATING KERNEL PORT OUTPUT - use the loopback
+1. Create an output to the loopback: ie.  Output(0)
+2. connect the loopback to hydra 
+

@@ -1,0 +1,9 @@
+Need to clear the state in between invocations of the server during the same import,
+this is hard to do in functional style, cannot call a function to change the modules
+state, unless using global call, although this seems bad style.
+	
+
+=> HOW DO WE MAINTAIN CLIENT (ACTIVE INSTRUMENT SCENE MAPPINGS) state
+that must be accessible to both of 
+	handle_message
+	handle_midi

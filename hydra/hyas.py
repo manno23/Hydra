@@ -1,30 +1,31 @@
 import asyncio
 import pyportmidi as midi
-
+from hydra.midi_handler import MidiHandler
 from hydra.client_manager import handle_midi, handle_message
 
 
-MIDI_FREQUENCY = 15
+MIDI_FREQUENCY = 5
 
 
-@asyncio.coroutine
-def check_queue(input_socket):
-    while True:
-        yield from asyncio.sleep(1./float(MIDI_FREQUENCY))
-        midi_data = input_socket.read(32)
-        client_manager.handle_midi(midi_data)
+# Need to create a data structure that will be able to share function results
+# among each other
 
 
 def run():
+
     midi.init()
-    input_socket = midi.Input(1)
+
+    msg_queue = asyncio.queues.Queue()
     loop = asyncio.get_event_loop()
+    midi_object = MidiHandler()
 
-    check = loop.create_task(check_queue(input_socket))
+    midi_task = loop.create_task(check_midi(midi_object))
+    network_task = loop.create_task(check_network(midi_object, msg_queue))
     listen = loop.create_datagram_endpoint(
-        HydraProtocol, local_addr=('127.0.0.1', 5555))
+        HydraProtocol(msg_queue), local_addr=('127.0.0.1', 5555))
+    l = loop.create_task(listen)
 
-    tasks = [check, listen]
+    tasks = [l, midi_task, network_task]
     print(tasks)
 
     try:
@@ -33,11 +34,11 @@ def run():
         print(e)
 
     try:
+        print('running loop')
         loop.run_forever()
     except KeyboardInterrupt:
         pass
 
-    transport.close()
     loop.close()
 
 
@@ -45,16 +46,35 @@ def stop():
     pass
 
 
+@asyncio.coroutine
+def check_midi(midi_object):
+    while True:
+        yield from asyncio.sleep(1./float(MIDI_FREQUENCY))
+        handle_midi(midi_object)
+
+
+@asyncio.coroutine
+def check_network(midi_object, msg_queue):
+    while True:
+        try:
+            network_data = yield from msg_queue.get()
+            print(network_data)
+            handle_message(midi_object, network_data)
+        except Exception as e:
+            print(e)
+
+
 class HydraProtocol(asyncio.DatagramProtocol):
-    def connection_made(self, transport):
-        print("connection made")
+    def __init__(self, msg_queue):
+        self.msg_queue = msg_queue
+        print("initialised with msg_queue %s" % self.msg_queue)
 
     def connection_lost(self):
         print("connection lost")
 
     def datagram_received(self, data, addr):
         print("received data: ", data, "from ", addr)
-        client_manager.handle_message(data)
+        self.msg_queue.put_nowait(data)
 
     def error_received(self, exc):
         print("There was an error sending/receiving")

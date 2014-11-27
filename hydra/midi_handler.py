@@ -57,7 +57,7 @@ log = logging.getLogger('Hydra')
 
 class MidiHandler(object):
     """
-MidiHandler
+    MidiHandler
 
     """
     def __init__(self):
@@ -196,9 +196,9 @@ MidiHandler
                     print (self.channel_instruments)
                     print ()
                     return CommandRemoveInstrument(
-                               channel,
-                               self.current_scene.id,
-                               self.current_scene.scene_state_message())
+                        channel,
+                        self.current_scene.id,
+                        self.current_scene.scene_state_message())
                 except KeyError:
                     log.error('Cannot remove an instrument if none has been \
                           assigned.')
@@ -251,41 +251,45 @@ MidiHandler
 
 class Scene(object):
     """
-Scene
+    Scene
 
-Each scene specified interprets the messages differently depending
-on how we want the client interface to interact with the midi playing.
+    Each scene specified interprets the messages differently depending
+    on how we want the client interface to interact with the midi playing.
 
-Within a scene messages may be targeted to all clients OR selected clients,
-and the clients targeted may change during the lifetime of the scene.
+    Within a scene messages may be targeted to all clients OR selected clients,
+    and the clients targeted may change during the lifetime of the scene.
 
-The current state of the scene must be maintained here so that all clients
-are reflecting the same model despite their own state.
+    The current state of the scene must be maintained here so that all clients
+    are reflecting the same model despite their own state.
     """
     def __init__(self, scene_id):
         """
         Default constructor.
-        @param scene_id: The ID for the scene that is agreed upon by the clients in the policy.
+        @param scene_id: The ID for the scene that is agreed upon by the
+                         clients in the policy.
         @param midi_input: Writes to the virtual midi instrument buffer.
         """
         self.id = scene_id
+
     def handle_midi(self, msg_type, channel, data1, data2, data3):
         """
 
-Converts the output midi from the application to the scene specific
-client messages.
-(ie. The scene directs midi to ask the ClientManager to select a client,
-then sends a message to the client to display the its state as active,
-then accept that clients messages and direct these to the midi.)
+        Converts the output midi from the application to the scene specific
+        client messages.
+        (ie. The scene directs midi to ask the ClientManager to select a
+        client, then sends a message to the client to display the its state
+        as active, then accept that clients messages and direct these to the
+        midi.)
 
-@param msg_type: single midi message to be interpreted and converted based on
-                 the scene policy
-@param channel:
-@param data1:
-@param data2:
-@param data3:
-@param timestamp:
-@return: packed string consisting of the message to be used by the client.
+        @param msg_type: single midi message to be interpreted and converted
+                         based on the scene policy
+        @param channel:
+        @param data1:
+        @param data2:
+        @param data3:
+        @param timestamp:
+        @return: packed string consisting of the message
+                 to be used by the client.
 
          Also a target_profile, this details what clients to target, when to
          change the targets. The clientmanager manages who the selected clients
@@ -293,13 +297,14 @@ then accept that clients messages and direct these to the midi.)
          delivered to the selected clients.
         """
         pass
+
     def scene_state_message(self):
         """
-Compiles all the state of the object and prepares it as a
-message ready for communicating.
-@return: a byte array of the form
-    byte[0]: scene id
-    byte[1]: the state of the scene, details in the shared policy
+        Compiles all the state of the object and prepares it as a
+        message ready for communicating.
+        @return: a byte array of the form
+        byte[0]: scene id
+        byte[1]: the state of the scene, details in the shared policy
         """
         pass
 
@@ -426,12 +431,8 @@ class InstrumentFountainScene(Instrument):
             elif note_state is note_off:
                 print ('Note OFF:')
 
-
         if msg_type is volume_control:  # Scene output
             # Rotation - determines volume
-            out = struct.unpack('!16f', data)
-            rot_matrix = (gl.GLfloat * len(out))(*out)
-            #x, y, z = rot_mat_to_angle(rot_matrix)
             self.midi_output.write()
             print ('volume control')
 
@@ -521,5 +522,4 @@ class InstrumentKeysScene(Instrument):
         The keyboard is initialised with no keys selected
         '''
         return struct.pack('B',
-                           self.id,
-        )
+                           self.id,)

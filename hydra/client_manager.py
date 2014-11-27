@@ -92,8 +92,10 @@ def handle_message(midi_handler, message):
     if msg_type is CLIENT_DISCONNECT:
 
         log.info('Removing client from lists')
-        if client_id in client_list:        client_list.pop(client_id)
-        if client_id in available_clients:  available_clients.remove(client_id)
+        if client_id in client_list:
+            client_list.pop(client_id)
+        if client_id in available_clients:
+            available_clients.remove(client_id)
         if client_id in instrument_map.clients:
 
             channel_changing_client = instrument_map.get_channel(client_id)
@@ -107,7 +109,7 @@ def handle_message(midi_handler, message):
                 # Get state of the instrument to initialise the new client
                 instr_state = midi_handler.\
                                 get_instrument_state(channel_changing_client)
-                msg = CommandAddInstrument(channel_changing_client, 
+                msg = CommandAddInstrument(channel_changing_client,
                                            instr_state).message
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 sock.sendto(msg, client_list[selected_client_id].address)
@@ -157,6 +159,7 @@ def handle_midi(midi_handler):
         elif isinstance(command, CommandAddInstrument):
 
             if command.channel not in instrument_map.channels:
+
                 selected_client_id = available_clients.pop()
                 instrument_map.add(selected_client_id, command.channel)
 
@@ -164,23 +167,26 @@ def handle_midi(midi_handler):
                     sendto(command.message,
                            client_list[selected_client_id].address)
 
-        elif (isinstance(command, CommandRemoveInstrument) and
-              command.channel in instrument_map.channels):
+        elif isinstance(command, CommandRemoveInstrument):
 
-            deactivating_client_id = \
-                instrument_map.get_client_id(command.channel)
-            instrument_map.remove_channel(command.channel)
-            available_clients.insert(0, deactivating_client_id)
+            if command.channel in instrument_map.channels:
 
-            socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                sendto(command.message,
-                       client_list[deactivating_client_id].address)
+                deactivating_client_id = \
+                    instrument_map.get_client_id(command.channel)
+                instrument_map.remove_channel(command.channel)
+                available_clients.insert(0, deactivating_client_id)
+
+                socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
+                    sendto(command.message,
+                           client_list[deactivating_client_id].address)
 
         elif isinstance(command, CommandChangeClient):
 
             if command.channel in instrument_map.channels:
+
                 deactivating_client_id = \
                     instrument_map.get_client_id(command.channel)
+
                 instrument_map.remove_channel(command.channel)
                 available_clients.insert(0, deactivating_client_id)
 
@@ -189,7 +195,8 @@ def handle_midi(midi_handler):
                            client_list[deactivating_client_id].
                            address)
 
-            if command.channel not in instrument_map.channels:
+            else:
+
                 selected_client_id = available_clients.pop()
                 instrument_map.add(selected_client_id, command.channel)
 
@@ -199,8 +206,6 @@ def handle_midi(midi_handler):
 
         elif isinstance(command, CommandUpdateInstrument):
 
-            log.debug(client_list)
-            log.debug(instrument_map.clients)
             if command.channel in instrument_map.channels:
                 client_id = \
                     instrument_map.get_client_id(command.channel)

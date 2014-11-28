@@ -1,3 +1,4 @@
+import sys
 import socket
 import struct
 from collections import namedtuple
@@ -7,8 +8,12 @@ from hydra.commands import *
 
 import logging
 
+sh = logging.StreamHandler(sys.stdout)
 
 log = logging.getLogger('Hydra')
+log.setLevel(logging.DEBUG)
+log.addHandler(sh)
+
 client = namedtuple('client', ['id', 'address', ])
 
 # Midi control messages
@@ -23,6 +28,9 @@ CLIENT_CONNECT = 1
 CLIENT_DISCONNECT = 2
 CLIENT_CHECK_CONNECTION = 3
 CLIENT_INSTRUMENT_MESSAGE = 4
+
+# HYDRAHEAD Destination port
+DESTINATION_NET_PORT = 23232
 
 
 class InstrumentMapping():
@@ -70,10 +78,12 @@ def init():
 
 def handle_message(midi_handler, message):
 
-    request = message[0]
-    client_address = message[1]
-    data = request[0]
+    data = message[0][0]
+    client_address = message[1][0]
     msg_type, client_id = struct.unpack("!BB", data[0:2])
+
+    log.debug(message)
+    log.debug(client_address)
 
     if msg_type is CLIENT_CONNECT:
 
@@ -81,10 +91,9 @@ def handle_message(midi_handler, message):
         msg_response_type = struct.pack('B', SERVER_CONFIRM_CONNECT)
         msg = msg_response_type + midi_handler.scene_state()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.sendto(msg, ('localhost', 5556))
+        sock.sendto(msg, (client_address, DESTINATION_NET_PORT))
         sock.close()
 
-        log.info('%s %s' % (client_id, client_address))
         if client_id not in client_list:
             client_list[client_id] = client(client_id, client_address)
             available_clients.append(client_id)
@@ -122,10 +131,6 @@ def handle_message(midi_handler, message):
             channel = instrument_map.get_channel(client_id)
             midi_handler.handle_message(channel, data[2:])
 
-    log.debug(client_list)
-    log.debug(available_clients)
-    log.debug(instrument_map.channels)
-
 
 def handle_midi(midi_handler):
     """
@@ -136,8 +141,6 @@ def handle_midi(midi_handler):
     active for example
     """
     commands = midi_handler.poll_midi_events()
-    log.debug('Handling the commands in client_manager')
-    log.debug(commands)
 
     if commands is None or len(client_list) is 0:
         return
@@ -148,13 +151,15 @@ def handle_midi(midi_handler):
 
             for client_id in available_clients:
                 socket.socket(socket.AF_INET, socket.SOCK_DGRAM).\
-                    sendto(command.message, ('localhost', 5556))
+                    sendto(command.message, (client_list[client_id].address,
+                                             DESTINATION_NET_PORT))
 
         elif isinstance(command, CommandUpdateClients):
 
             for client_id in available_clients:
                 socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                    sendto(command.message, client_list[client_id].address)
+                    sendto(command.message, (client_list[client_id].address,
+                                             DESTINATION_NET_PORT))
 
         elif isinstance(command, CommandAddInstrument):
 
@@ -165,7 +170,8 @@ def handle_midi(midi_handler):
 
                 socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
                     sendto(command.message,
-                           client_list[selected_client_id].address)
+                           (client_list[selected_client_id].address,
+                            DESTINATION_NET_PORT))
 
         elif isinstance(command, CommandRemoveInstrument):
 
@@ -178,7 +184,8 @@ def handle_midi(midi_handler):
 
                 socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
                     sendto(command.message,
-                           client_list[deactivating_client_id].address)
+                           (client_list[deactivating_client_id].address,
+                            DESTINATION_NET_PORT))
 
         elif isinstance(command, CommandChangeClient):
 
@@ -192,8 +199,8 @@ def handle_midi(midi_handler):
 
                 socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
                     sendto(command.remove_message,
-                           client_list[deactivating_client_id].
-                           address)
+                           (client_list[deactivating_client_id].address,
+                            DESTINATION_NET_PORT))
 
             else:
 
@@ -202,7 +209,8 @@ def handle_midi(midi_handler):
 
                 socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
                     sendto(command.add_message,
-                           client_list[selected_client_id].address)
+                           (client_list[selected_client_id].address,
+                            DESTINATION_NET_PORT))
 
         elif isinstance(command, CommandUpdateInstrument):
 
@@ -210,7 +218,8 @@ def handle_midi(midi_handler):
                 client_id = \
                     instrument_map.get_client_id(command.channel)
                 socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                    sendto(command.message, client_list[client_id].address)
+                    sendto(command.message, (client_list[client_id].address,
+                                             DESTINATION_NET_PORT))
 
 
 def close():

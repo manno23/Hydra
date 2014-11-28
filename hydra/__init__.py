@@ -12,13 +12,11 @@ hydra will include
  - config files
  - logging
 
-
-
  - the user interface => interface() -> blocking(checks to see if running)
 
+Methods for creating virtual midi ports: (Also describe default functionality
+if available)
 
-
-Methods for creating virtual midi ports: (Also describe default functionality if available)
 LINUX: amidi -p <NAME> : creates a virtual midi port if it is not yet already
                         then use -s to send
                                 -d to receive
@@ -31,4 +29,4 @@ OSX:
 __version__ = '0.1'
 __author__ = 'Jason Manning'
 
-from hydra.hyas import run, stop
+from hydra.app import run

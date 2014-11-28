@@ -35,8 +35,7 @@ Channel 1-15: Directs midi messages to the instruments.
 Channel 15: Changes the current scene
 """
 
-print('@@@@@ midi_handler')
-
+import sys
 import struct
 import logging
 import pyportmidi as midi
@@ -52,7 +51,9 @@ NOTE_OFF = 8
 NOTE_ON = 9
 PITCH_BEND = 14
 
+
 log = logging.getLogger('Hydra')
+log.setLevel(logging.DEBUG)
 
 
 class MidiHandler(object):
@@ -110,7 +111,6 @@ class MidiHandler(object):
                 command[1]: message to be sent to clients (if neccesary)
                 command[2]: the channel the midi command derived from.
         """
-        log.debug('Polling the input')
         if self.midi_input.poll():
 
             midi_msgs = self.midi_input.read(32)
@@ -151,11 +151,11 @@ class MidiHandler(object):
                                               self.current_scene.
                                               scene_state_message())
                 except KeyError:
-                    print('The scene ID [' + str(scene_id) + '] \
-                            chosen by the midi on channel 0 is not available.')
+                    print('The scene ID [' + str(scene_id) +
+                          '] chosen by the midi on channel 0 is not available')
                     print('Possible scenes are', self.scene_list)
-                    logging.error('Attempted to set a scene id \
-                            that is out of range.')
+                    logging.error('Attempted to set a scene id' +
+                                  'that is out of range.')
             else:
                 scene_msg = self.current_scene.handle_midi(msg_type,
                                                            channel,
@@ -182,7 +182,7 @@ class MidiHandler(object):
                                 instrument.initial_message()
                             )
                 except KeyError:
-                    Log.error('Cannot change client on the channel %s ' +
+                    log.error('Cannot change client on the channel %s ' +
                               'when no instrument has been assigned.\n' +
                               'Assign an instrument first from the midi ' +
                               'input range 121 - 125.')
@@ -191,10 +191,10 @@ class MidiHandler(object):
 
                 log.info('Unmapping instrument from channel')
                 try:
-                    print (self.channel_instruments)
+                    print(self.channel_instruments)
                     self.channel_instruments.pop(channel)
-                    print (self.channel_instruments)
-                    print ()
+                    print(self.channel_instruments)
+                    print()
                     return CommandRemoveInstrument(
                         channel,
                         self.current_scene.id,
@@ -426,15 +426,15 @@ class InstrumentFountainScene(Instrument):
                 if note_index >= note_count:
                     note_index = note_count - 1
                 note = self.notes_available[note_index]
-                print ('Note ON:', note)
+                print('Note ON:', note)
 
             elif note_state is note_off:
-                print ('Note OFF:')
+                print('Note OFF:')
 
         if msg_type is volume_control:  # Scene output
             # Rotation - determines volume
             self.midi_output.write()
-            print ('volume control')
+            print('volume control')
 
     def handle_midi(self, msg_type, channel, data1, data2, data3):
         if msg_type is NOTE_ON:

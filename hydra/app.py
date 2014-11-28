@@ -18,9 +18,11 @@ import socketserver
 import pyportmidi
 
 from . import client_manager
+from . import midi_handler
 
 
-ADDRESS = ("localhost", 5555)
+# ADDRESS = ("127.0.0.1", 5555)
+ADDRESS = ("192.168.1.2", 5555)
 
 
 def run():
@@ -30,18 +32,19 @@ def run():
     t.start()
 
     pyportmidi.init()
+    midi_object = midi_handler.MidiHandler()
 
     while True:
         try:
             # Get items off the network queue
             try:
-                client_manager.handle_message(msg_queue.get_nowait())
+                client_manager.handle_message(midi_object,
+                                              msg_queue.get(timeout=1/15))
             except queue.Empty:
                 pass
 
             # Get items from the midi buffer
-            client_manager.handle_midi()
-
+            client_manager.handle_midi(midi_object)
 
         except KeyboardInterrupt:
             break
@@ -65,7 +68,7 @@ class MyServer(socketserver.UDPServer):
             socketserver.UDPServer.__init__(self, *args, **kwargs)
         except Exception as e:
             print(e)
-            print ('Target router not connected')
+            print('Target router not connected')
             sys.exit()
         self.allow_reuse_address = True
         self.msg_queue = args[2]

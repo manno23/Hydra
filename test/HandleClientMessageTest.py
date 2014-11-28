@@ -1,4 +1,3 @@
-import time
 import os
 import struct
 import socket
@@ -10,8 +9,7 @@ from threading import Thread
 
 import sys
 sys.path.append(os.path.join('/home', 'jm', 'code', 'python', 'Hydra'))
-import hydra.client_manager as client_manager
-import hydra.midi_handler as midi_handler
+from hydra import client_manager
 import unittest
 
 import logging
@@ -20,7 +18,7 @@ log = logging.getLogger('Hydra')
 
 __author__ = 'Jason'
 
-ADDRESS = ('localhost', 5555)
+SERVER_ADDRESS = ('localhost', 5555)
 
 
 class HandleClientMessageTest(unittest.TestCase):
@@ -36,10 +34,10 @@ class HandleClientMessageTest(unittest.TestCase):
         Also set up a server to act as the client, this will receive the
         messages sent by the client_manager in response to the midi events
         """
-        self.midi_handler = client_manager.init()
+        self.midi_obj = client_manager.init()
         self.msg_queue = queue.Queue()
         self.client_simulator = \
-            ClientSimulator(('localhost', 5556),
+            ClientSimulator(('localhost', 23232),
                             UDPRequestHandler,
                             self.msg_queue)
 
@@ -56,18 +54,20 @@ class HandleClientMessageTest(unittest.TestCase):
         self.t.start()
 
     def test_handling_client_connection_message(self):
-
-        # The initial message a client will send is in the request format
-        # that the DatagramServer has received,
-        # it contains the request as well as it's ID
+        """
+        Test Client Connection
+        The initial message a client will send is in the request format
+        that the DatagramServer has received,
+        it contains the request as well as it's ID
+        """
 
         # Construct connection msg
         client_id = 1
         data = \
             struct.pack('BB', client_manager.CLIENT_CONNECT, client_id)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        connection_message = ((data, sock), ADDRESS)
-        client_manager.handle_message(self.midi_handler, connection_message)
+        connection_message = ((data, sock), SERVER_ADDRESS)
+        client_manager.handle_message(self.midi_obj, connection_message)
 
         # TODO Handle the case when
         server_response = self.msg_queue.get(timeout=1)
@@ -86,8 +86,8 @@ class HandleClientMessageTest(unittest.TestCase):
         # Construct connection msg by client of id:1
         data = struct.pack('BB', client_manager.CLIENT_CONNECT, 1)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        connection_message = ((data, sock), ADDRESS)
-        client_manager.handle_message(self.midi_handler, connection_message)
+        connection_message = ((data, sock), SERVER_ADDRESS)
+        client_manager.handle_message(self.midi_obj, connection_message)
 
         # Set fountain scene
         self.midi_simulator.note_on(116, 100, 0)
@@ -97,7 +97,7 @@ class HandleClientMessageTest(unittest.TestCase):
         # have used note 36
         self.midi_simulator.note_on(36, 120, 0)
         self.midi_simulator.note_off(36, 100, 0)
-        client_manager.handle_midi(self.midi_handler) 
+        client_manager.handle_midi(self.midi_obj)
         # Ignore the first 2 message
         self.msg_queue.get(timeout=1)
         midi_response = self.msg_queue.get(timeout=1)
@@ -120,9 +120,9 @@ class HandleClientMessageTest(unittest.TestCase):
             data = struct.pack('BB',
                                client_manager.CLIENT_CONNECT,
                                client_id)
-            connection_message = ((data, sock), ADDRESS)
+            connection_message = ((data, sock), SERVER_ADDRESS)
 
-            client_manager.handle_message(self.midi_handler, connection_message)
+            client_manager.handle_message(self.midi_obj, connection_message)
         log.debug('5 clients have been added')
         self.assertEqual(len(client_manager.client_list),
                          NUM_CLIENTS)
@@ -133,7 +133,7 @@ class HandleClientMessageTest(unittest.TestCase):
 
         log.debug('Midi message is activating a client')
         self.midi_simulator.note_on(121, 100, 1)
-        client_manager.handle_midi(self.midi_handler)
+        client_manager.handle_midi(self.midi_obj)
 
         self.assertEqual(len(client_manager.available_clients),
                          NUM_CLIENTS-1)
@@ -144,41 +144,37 @@ class HandleClientMessageTest(unittest.TestCase):
         # Client attempts to connect id:2
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         data = struct.pack('BB', 1, 2)
-        connection_message = ((data, sock), ADDRESS)
-        client_manager.handle_message(self.midi_handler, connection_message)
+        connection_message = ((data, sock), SERVER_ADDRESS)
+        client_manager.handle_message(self.midi_obj, connection_message)
 
         # Make it active for channel 1 using instrument 1
         self.midi_simulator.note_on(121, 100, 1)
-        client_manager.handle_midi(self.midi_handler)
+        client_manager.handle_midi(self.midi_obj)
 
         # Deactivate the client and send a message to it
         self.midi_simulator.note_on(126, 100, 1)
-        client_manager.handle_midi(self.midi_handler)
-        print ('client -> channel', client_manager.instrument_map.clients)
+        client_manager.handle_midi(self.midi_obj)
+        print('client -> channel', client_manager.instrument_map.clients)
         self.assertFalse(2 in client_manager.instrument_map.clients)
 
     def test_instrument_note_definition(self):
-
-        '''
+        """
         Test updating instrument from midi.
-        '''
+        """
         client_id = 1
         data = struct.pack('BB',
                            client_manager.CLIENT_CONNECT,
                            client_id)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        connection_message = ((data, sock), ADDRESS)
-        client_manager.handle_message(self.midi_handler, connection_message)
+        connection_message = ((data, sock), SERVER_ADDRESS)
+        client_manager.handle_message(self.midi_obj, connection_message)
 
-        log.debug(dir(self.midi_simulator))
         # We are expecting a server connection confirmation messagel
+        # Remove this from the queue
         try:
-            server_connection_confirmation = self.msg_queue.get(timeout=1)
-        except queue.Empty as e:
-            for i in e.__dict__:
-                print(i)
-            e.__str__ = "A confirmation message was not received"
-            raise e
+            self.msg_queue.get(timeout=1)
+        except Exception as e:
+            log.exception(e)
 
         # assign instrument:2 to channel:1
         self.midi_simulator.note_on(122, 100, 1)
@@ -197,11 +193,11 @@ class HandleClientMessageTest(unittest.TestCase):
         self.midi_simulator.note_on(0, 100, 1)
         self.midi_simulator.note_off(0, 100, 1)
 
-        client_manager.handle_midi(self.midi_handler)
+        client_manager.handle_midi(self.midi_obj)
 
         # notes should be in ascending order
-        log.debug(self.midi_handler.channel_instruments)
-        self.assertEqual(self.midi_handler.channel_instruments[1].
+        log.debug(self.midi_obj.channel_instruments)
+        self.assertEqual(self.midi_obj.channel_instruments[1].
                          note_list,
                          [52, 68, 74])
 
@@ -211,7 +207,6 @@ class HandleClientMessageTest(unittest.TestCase):
 
         client_manager.close()
         midi.quit()
-
 
 
 class UDPRequestHandler(socketserver.ThreadingMixIn,
@@ -231,9 +226,9 @@ class ClientSimulator(socketserver.UDPServer):
         try:
             socketserver.UDPServer.__init__(self, *args, **kwargs)
         except Exception as e:
-            print ('>>>>> Handling UDPServer Exception')
-            print (str(e))
-            print ('that was the udp server exception!')
+            print('>>>>> Handling UDPServer Exception')
+            print(str(e))
+            print('that was the udp server exception!')
 
         self.allow_reuse_address = True
         self.msg_queue = args[2]

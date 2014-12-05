@@ -26,7 +26,8 @@ WINDOWS: BeLoop (torrents - or wherever)
 OSX:
 '''
 
-__version__ = '0.1'
+__version__ = '0.01'
 __author__ = 'Jason Manning'
 
 from hydra.app import run
+run()

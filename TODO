@@ -29,3 +29,23 @@ the version of vim that is running
 the python build in vim
 
 #We will not worry about completion
+
+
+
+THINGS TO DO
+Creating a default configuration file
+Saving configuration file
+Logging
+Faster build process
+Clean up tests, proper formatting test_*.py files
+Lastly add a UI
+
+
+
+**** Lets think about how users will use this, from advanced to beginner ******
+Newbie.
+Step 1. Download installer for MS or Apple
+
+Advanced usage, we'll handle this case first. 
+*Able to follow instructions to give command line parameters to begin use
+*Will be able to use the built/source distributions to install, (Optional) possibly within a virtual environment

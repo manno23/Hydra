@@ -12,45 +12,16 @@ TODO = open('TODO').read()
 EXTRAS = {}
 
 long_description = DESCRIPTION + CHANGES + TODO
-# import sys
-# if "checkdocs" in sys.argv:
-#     print(long_description)
-
 
 METADATA = {
-    'name':             'pyportmidi',
-    'version':          '0.0.7',
+    'name':             'Hydra',
+    'version':          '0.0.1',
     'license':          'MIT License',
     'url':              'http://pypi.python.org/pyportmidi/',
-    'author':           'John Harrison, Roger B. Dannenberg, Rene Dudfield...',
-    'author_email':     'renesd@gmail.com',
-    'maintainer':       'Rene Dudfield',
-    'maintainer_email': 'renesd@gmail.com',
-    'description':      'Python Wrappings for PortMidi #python.',
+    'author':           'manno23',
+    'author_email':     'jasonmanning@gmail.com',
+    'description':      'Midi controller client control and management',
     'long_description': long_description,
-    'classifiers':      [
-        'Development Status :: 2 - Pre-Alpha',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Information Technology',
-        'License :: OSI Approved :: BSD License',
-        'Operating System :: MacOS :: MacOS X',
-        'Operating System :: Microsoft :: Windows',
-        'Operating System :: POSIX :: Linux',
-        'Programming Language :: Cython',
-        'Programming Language :: C',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.5',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.0',
-        'Programming Language :: Python :: 3.1',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Topic :: Multimedia :: Sound/Audio :: MIDI',
-        'Topic :: Software Development :: Libraries',
-    ],
 }
 
 
@@ -61,31 +32,27 @@ if "bdist_msi" in sys.argv:
     METADATA["version"] = METADATA["version"].replace("release", "")
 
 
-# allow optionally using setuptools for bdist_egg.
-using_setuptools = False
-
-
 PACKAGEDATA = {
-    'package_dir': {'pyportmidi': 'pyportmidi'},
-    'packages': ['pyportmidi'],
+    'package_dir': {'hydra': 'hydra'},
+    'packages': ['pyportmidi', 'hydra'],
 }
 
 
 PACKAGEDATA.update(METADATA)
-PACKAGEDATA.update(EXTRAS)
 
 
 if sys.platform == 'win32':
     print("Found Win32 platform")
     EXTENSION = dict(
         ext_modules=[
-            Extension("PYPortmidi._pyportmidi",
+            Extension("pyportmidi._pyportmidi",
                       [os.path.join("pyportmidi", "_pyportmidi.pyx")],
-                      library_dirs=["../Release"],
+                      library_dirs=["pyportmidi/windows"],
+                      include_dirs=["pyportmidi/includes"],
                       libraries=["portmidi", "winmm"],
-                      include_dirs=["../porttime"],
-                      # define_macros = [("_WIN32_", None)])
                       extra_compile_args=["/DWIN32"])
+            # include_dirs=["pyportmidi/porttime"],
+            # define_macros = [("_WIN32_", None)])
         ]
     )
 elif sys.platform == 'darwin':

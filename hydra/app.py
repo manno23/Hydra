@@ -15,14 +15,13 @@ import sys
 import queue
 import threading
 import socketserver
+import netifaces
 import pyportmidi
 
 from . import client_manager
 from . import midi_handler
 
-
-# ADDRESS = ("127.0.0.1", 5555)
-ADDRESS = ("192.168.1.2", 5555)
+HYDRA_SERVER_PORT = 5555
 
 
 def run():
@@ -64,14 +63,32 @@ class UDPRequestHandler(socketserver.ThreadingMixIn,
 
 class MyServer(socketserver.UDPServer):
     def __init__(self, *args, **kwargs):
-        try:
-            socketserver.UDPServer.__init__(self, *args, **kwargs)
-        except Exception as e:
-            print(e)
-            print('Target router not connected')
-            sys.exit()
+        socketserver.UDPServer.__init__(self, *args, **kwargs)
         self.allow_reuse_address = True
         self.msg_queue = args[2]
 
+
+def _choose_gateway(input_domain):
+    while True:
+        print('Choose a gateway to use: ')
+        for idx, possible_gateway in enumerate(input_domain):
+            print("%i: %s" % (idx, possible_gateway))
+        _input = int(input('>: '))
+        if _input in range(len(input_domain)):
+            return input_domain[_input]
+        else:
+            print('Invalid Input. Must be one of the numbers shown.')
+
+
+if netifaces.AF_INET not in netifaces.gateways():
+    print('No network interfaces available')
+    sys.exit()
+
+available_gateways = \
+    [x for (_, x, _) in netifaces.gateways()[netifaces.AF_INET]]
+_gateway = _choose_gateway(available_gateways)
+_address = netifaces.ifaddresses(_gateway)[netifaces.AF_INET][0]['addr']
+_server_address = (_address, HYDRA_SERVER_PORT)
+
 msg_queue = queue.Queue()
-server = MyServer(ADDRESS, UDPRequestHandler, msg_queue)
+server = MyServer(_server_address, UDPRequestHandler, msg_queue)

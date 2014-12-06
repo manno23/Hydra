@@ -3,7 +3,7 @@ Python wrappings for PortMidi
 John Harrison
 harrison@media.mit.edu
 
-Modified by Roger B. Dannenberg, Nov 2009
+Modified by Jason Manning 12/2014
 
 PyPortMidi
 ----------
@@ -25,10 +25,10 @@ changes in the setup.py file for it to install correctly on Linux
 machines. The changes should be pretty straightforward, and I am
 anxious to work with a Linux user on the port.
 
+
 PyPortMidi works with Python 2.6 and Python 3.1, although the ports
 are mostly separate because of various language incompatibilities.
 
 Please see README26.txt for information about the Python 2.6 version.
 
 See README31.txt for information about the Python 3.1 version.
-

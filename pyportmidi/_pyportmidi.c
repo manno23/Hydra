@@ -772,7 +772,7 @@ static char __pyx_k_GetDefaultOutputDeviceID[] = "GetDefaultOutputDeviceID";
 static char __pyx_k_minimum_buffer_length_is_1[] = "minimum buffer length is 1";
 static char __pyx_k_maximum_list_length_is_1024[] = "maximum list length is 1024";
 static char __pyx_k_maximum_buffer_length_is_1024[] = "maximum buffer length is 1024";
-static char __pyx_k_Users_jason_code_PyPortMidi_pyp[] = "/Users/jason/code/PyPortMidi/pyportmidi/_pyportmidi.pyx";
+static char __pyx_k_home_jm_code_python_Hydra_pypor[] = "/home/jm/code/python/Hydra/pyportmidi/_pyportmidi.pyx";
 static char __pyx_k_Closing_MIDI_input_stream_and_de[] = "Closing MIDI input stream and destroying instance";
 static char __pyx_k_Closing_MIDI_output_stream_and_d[] = "Closing MIDI output stream and destroying instance";
 static char __pyx_k_Unable_to_open_Midi_OutputDevice[] = "Unable to open Midi OutputDevice=";
@@ -821,7 +821,6 @@ static PyObject *__pyx_n_s_TRUE;
 static PyObject *__pyx_n_s_Terminate;
 static PyObject *__pyx_n_s_Time;
 static PyObject *__pyx_kp_s_Unable_to_open_Midi_OutputDevice;
-static PyObject *__pyx_kp_s_Users_jason_code_PyPortMidi_pyp;
 static PyObject *__pyx_kp_s_Writing_to_MIDI_buffer;
 static PyObject *__pyx_kp_s_arguments_in_event_list;
 static PyObject *__pyx_n_s_array;
@@ -834,6 +833,7 @@ static PyObject *__pyx_n_s_end;
 static PyObject *__pyx_kp_s_err;
 static PyObject *__pyx_n_s_err_2;
 static PyObject *__pyx_n_s_file;
+static PyObject *__pyx_kp_s_home_jm_code_python_Hydra_pypor;
 static PyObject *__pyx_n_s_i;
 static PyObject *__pyx_n_s_import;
 static PyObject *__pyx_n_s_info;
@@ -4354,7 +4354,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_Terminate, __pyx_k_Terminate, sizeof(__pyx_k_Terminate), 0, 0, 1, 1},
   {&__pyx_n_s_Time, __pyx_k_Time, sizeof(__pyx_k_Time), 0, 0, 1, 1},
   {&__pyx_kp_s_Unable_to_open_Midi_OutputDevice, __pyx_k_Unable_to_open_Midi_OutputDevice, sizeof(__pyx_k_Unable_to_open_Midi_OutputDevice), 0, 0, 1, 0},
-  {&__pyx_kp_s_Users_jason_code_PyPortMidi_pyp, __pyx_k_Users_jason_code_PyPortMidi_pyp, sizeof(__pyx_k_Users_jason_code_PyPortMidi_pyp), 0, 0, 1, 0},
   {&__pyx_kp_s_Writing_to_MIDI_buffer, __pyx_k_Writing_to_MIDI_buffer, sizeof(__pyx_k_Writing_to_MIDI_buffer), 0, 0, 1, 0},
   {&__pyx_kp_s_arguments_in_event_list, __pyx_k_arguments_in_event_list, sizeof(__pyx_k_arguments_in_event_list), 0, 0, 1, 0},
   {&__pyx_n_s_array, __pyx_k_array, sizeof(__pyx_k_array), 0, 0, 1, 1},
@@ -4367,6 +4366,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_err, __pyx_k_err, sizeof(__pyx_k_err), 0, 0, 1, 0},
   {&__pyx_n_s_err_2, __pyx_k_err_2, sizeof(__pyx_k_err_2), 0, 0, 1, 1},
   {&__pyx_n_s_file, __pyx_k_file, sizeof(__pyx_k_file), 0, 0, 1, 1},
+  {&__pyx_kp_s_home_jm_code_python_Hydra_pypor, __pyx_k_home_jm_code_python_Hydra_pypor, sizeof(__pyx_k_home_jm_code_python_Hydra_pypor), 0, 0, 1, 0},
   {&__pyx_n_s_i, __pyx_k_i, sizeof(__pyx_k_i), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
   {&__pyx_n_s_info, __pyx_k_info, sizeof(__pyx_k_info), 0, 0, 1, 1},
@@ -4410,7 +4410,7 @@ static int __Pyx_InitCachedConstants(void) {
  *     """
  * Initialize: call this first
  */
-  __pyx_codeobj__2 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jason_code_PyPortMidi_pyp, __pyx_n_s_Initialize, 132, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 132; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__2 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_jm_code_python_Hydra_pypor, __pyx_n_s_Initialize, 132, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 132; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "pyportmidi/_pyportmidi.pyx":139
  *     Pt_Start(1, NULL, NULL) # /[inserted by cython to avoid comment start]* equiv to TIME_START: start timer w/ ms accuracy *[inserted by cython to avoid comment closer]/
@@ -4419,7 +4419,7 @@ static int __Pyx_InitCachedConstants(void) {
  *     """
  * Terminate: call this to clean up Midi streams when done.
  */
-  __pyx_codeobj__3 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jason_code_PyPortMidi_pyp, __pyx_n_s_Terminate, 139, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 139; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__3 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_jm_code_python_Hydra_pypor, __pyx_n_s_Terminate, 139, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 139; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "pyportmidi/_pyportmidi.pyx":147
  *     Pm_Terminate()
@@ -4428,7 +4428,7 @@ static int __Pyx_InitCachedConstants(void) {
  *     return Pm_GetDefaultInputDeviceID()
  * 
  */
-  __pyx_codeobj__4 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jason_code_PyPortMidi_pyp, __pyx_n_s_GetDefaultInputDeviceID, 147, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 147; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__4 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_jm_code_python_Hydra_pypor, __pyx_n_s_GetDefaultInputDeviceID, 147, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 147; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "pyportmidi/_pyportmidi.pyx":150
  *     return Pm_GetDefaultInputDeviceID()
@@ -4437,7 +4437,7 @@ static int __Pyx_InitCachedConstants(void) {
  *     return Pm_GetDefaultOutputDeviceID()
  * 
  */
-  __pyx_codeobj__5 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jason_code_PyPortMidi_pyp, __pyx_n_s_GetDefaultOutputDeviceID, 150, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 150; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__5 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_jm_code_python_Hydra_pypor, __pyx_n_s_GetDefaultOutputDeviceID, 150, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 150; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "pyportmidi/_pyportmidi.pyx":153
  *     return Pm_GetDefaultOutputDeviceID()
@@ -4446,7 +4446,7 @@ static int __Pyx_InitCachedConstants(void) {
  *     return Pm_CountDevices()
  * 
  */
-  __pyx_codeobj__6 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jason_code_PyPortMidi_pyp, __pyx_n_s_CountDevices, 153, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 153; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__6 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_jm_code_python_Hydra_pypor, __pyx_n_s_CountDevices, 153, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 153; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "pyportmidi/_pyportmidi.pyx":156
  *     return Pm_CountDevices()
@@ -4458,7 +4458,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__7 = PyTuple_Pack(2, __pyx_n_s_i, __pyx_n_s_info); if (unlikely(!__pyx_tuple__7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 156; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
-  __pyx_codeobj__8 = (PyObject*)__Pyx_PyCode_New(1, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__7, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jason_code_PyPortMidi_pyp, __pyx_n_s_GetDeviceInfo, 156, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 156; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__8 = (PyObject*)__Pyx_PyCode_New(1, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__7, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_jm_code_python_Hydra_pypor, __pyx_n_s_GetDeviceInfo, 156, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 156; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "pyportmidi/_pyportmidi.pyx":173
  *     else: return
@@ -4467,7 +4467,7 @@ static int __Pyx_InitCachedConstants(void) {
  *     """
  * Time() returns the current time in ms
  */
-  __pyx_codeobj__9 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jason_code_PyPortMidi_pyp, __pyx_n_s_Time, 173, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 173; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__9 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_jm_code_python_Hydra_pypor, __pyx_n_s_Time, 173, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 173; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "pyportmidi/_pyportmidi.pyx":180
  *     return Pt_Time()
@@ -4479,7 +4479,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__10 = PyTuple_Pack(1, __pyx_n_s_err_2); if (unlikely(!__pyx_tuple__10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 180; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__10);
   __Pyx_GIVEREF(__pyx_tuple__10);
-  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jason_code_PyPortMidi_pyp, __pyx_n_s_GetErrorText, 180, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 180; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_jm_code_python_Hydra_pypor, __pyx_n_s_GetErrorText, 180, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 180; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "pyportmidi/_pyportmidi.pyx":187
  *     return Pm_GetErrorText(err)
@@ -4491,7 +4491,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__12 = PyTuple_Pack(1, __pyx_n_s_chan); if (unlikely(!__pyx_tuple__12)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 187; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__12);
   __Pyx_GIVEREF(__pyx_tuple__12);
-  __pyx_codeobj__13 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__12, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jason_code_PyPortMidi_pyp, __pyx_n_s_Channel, 187, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__13)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 187; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__13 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__12, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_jm_code_python_Hydra_pypor, __pyx_n_s_Channel, 187, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__13)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 187; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;

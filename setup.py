@@ -16,8 +16,6 @@ long_description = DESCRIPTION + CHANGES + TODO
 METADATA = {
     'name':             'Hydra',
     'version':          '0.0.1',
-    'license':          'MIT License',
-    'url':              'http://pypi.python.org/pyportmidi/',
     'author':           'manno23',
     'author_email':     'jasonmanning@gmail.com',
     'description':      'Midi controller client control and management',

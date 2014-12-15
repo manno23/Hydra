@@ -36,7 +36,7 @@ def main():
     # Check if configuration directory exists
     config_dir = os.path.join(os.getcwd(), args.config)
     if not os.path.isdir(config_dir):
-        print(('Fatal Error: Unable to findspecified configuration '
+        print(('Fatal Error: Unable to find specified configuration '
               'directory {}').format(config_dir))
         exit()
     config_path = os.path.join(config_dir, 'hydra.conf')

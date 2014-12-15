@@ -1,34 +1,4 @@
-Need to clear the state in between invocations of the server during the same import,
-this is hard to do in functional style, cannot call a function to change the modules
-state, unless using global call, although this seems bad style.
-	
 
-=> HOW DO WE MAINTAIN CLIENT (ACTIVE INSTRUMENT SCENE MAPPINGS) state
-that must be accessible to both of 
-	handle_message
-	handle_midi
-
-
-NO PRIORITY
-setting up vi plugins not neccesary for now - don't sidetrack
-	- although, the problem that has arisen is related to the build of vim,
-	syntastic requires that the python version in vim matches the path pointed to,
-	so the virtual-env is upsetting the versioning
-
-	so to switch the setup, it depends on the environment (with or without the venv)
-	the variables
-
-
-						vim-python					vim-python3
-pydoc_exec=				/usr/bin/pydoc				/usr/bin/pydoc3
-syntastic_python_exec=	/usr/bin/python				/usr/bin/python3
-		
-1)vim-virtualenv should be determining the environment, but can we change 
-the version of vim that is running 
-2) vim-virtualenv cannot add the virtualenv python path that is at odds with 
-the python build in vim
-
-#We will not worry about completion
 
 
 
@@ -49,3 +19,18 @@ Step 1. Download installer for MS or Apple
 Advanced usage, we'll handle this case first. 
 *Able to follow instructions to give command line parameters to begin use
 *Will be able to use the built/source distributions to install, (Optional) possibly within a virtual environment
+
+
+
+
+(LOW PRIORITY - introduce functional style in rust)
+Need to clear the state in between invocations of the server during the same import,
+this is hard to do in functional style, cannot call a function to change the modules
+state, unless using global call, although this seems bad style.
+	
+
+=> HOW DO WE MAINTAIN CLIENT (ACTIVE INSTRUMENT SCENE MAPPINGS) state
+that must be accessible to both of 
+	handle_message
+	handle_midi
+

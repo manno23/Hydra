@@ -9,8 +9,8 @@ from threading import Thread
 
 import sys
 sys.path.append(os.path.join('/home', 'jm', 'code', 'python', 'Hydra'))
-from hydra import client_manager
 import unittest
+import hydra
 
 import logging
 

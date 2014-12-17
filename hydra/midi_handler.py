@@ -35,7 +35,6 @@ Channel 1-15: Directs midi messages to the instruments.
 Channel 15: Changes the current scene
 """
 
-import sys
 import struct
 import logging
 import pyportmidi as midi

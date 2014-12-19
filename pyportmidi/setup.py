@@ -37,8 +37,8 @@ if sys.platform == 'win32':
             Extension("pyportmidi._pyportmidi",
                       [os.path.join("pyportmidi", "_pyportmidi.c")],
                       libraries=["portmidi", "porttime", "winmm"],
-                      library_dirs=[os.path.join("pyportmidi", "win")],
-                      include_dirs=[os.path.join("pyportmidi", "includes")],
+                      library_dirs=["win"],
+                      include_dirs=["includes"],
             )
         ]
    )

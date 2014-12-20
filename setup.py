@@ -12,7 +12,7 @@ EXTRAS = {}
 long_description = DESCRIPTION + CHANGES + TODO
 
 METADATA = {
-    'name':             'Hydra',
+    'name':             'hydra',
     'version':          '0.0.1',
     'author':           'manno23',
     'author_email':     'jasonmanning@gmail.com',
@@ -29,7 +29,7 @@ if "bdist_msi" in sys.argv:
 
 
 PACKAGEDATA = {
-    'package_dir': {'hydra': 'hydra'},
+    'packages': ['hydra'],
 }
 PACKAGEDATA.update(METADATA)
 

@@ -1,5 +1,5 @@
 *.pyc
 *.sw*
-__pycache__
 tags
 build
+__pycache__

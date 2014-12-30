@@ -10,12 +10,14 @@ import sys
 import configparser
 import importlib
 
+from hydra import config
+
 
 def main():
 
     # Check all our dependencies have been met
     import_fail = False
-    for module in ['netifaces, pyportmidi']:
+    for module in ['netifaces', 'pyportmidi']:
         try:
             importlib.import_module(module)
         except ImportError:
@@ -30,7 +32,7 @@ def main():
     CONFIG_FILE_NAME = '.hydra'
     home_dir = os.path.expanduser('~')
     config_path = os.path.join(home_dir, CONFIG_FILE_NAME)
-    config = configparser.ConfigParser()
+    conf = configparser.ConfigParser()
 
     # Check if configuration directory exists - this should really
     # not be a problem.
@@ -43,21 +45,21 @@ def main():
     if not os.path.isfile(config_path):
         # We will need to manually configure as well as provide the defaults
         print('Creating the new config file')
-        config['NETWORKING'] = {
+        conf['NETWORKING'] = {
             'local_address': 'ask user for this value',
             'local_port': '5555',
             }
         with open(config_path, 'w') as config_file:
             print('Writing the new config file')
-            config.write(config_file)
+            conf.write(config_file)
     else:
         # We can load the configuration into a
         # dictionary of values
         print('Grabbing values from the configuration file')
         with open(config_path, 'r') as config_file:
-            config.readfp(config_file)
-            for section in config.sections():
-                    print(config[section])
+            conf.readfp(config_file)
+            for section in conf.sections():
+                    print(conf[section])
 
     # Create new instance of the server
     hydra_server = config.from_config_file(config_path)

@@ -34,3 +34,8 @@ that must be accessible to both of
 	handle_message
 	handle_midi
 
+
+SERVICE API
+To allow for people to build there own clients to connect to hydra, a 
+good api is needed. 
+It should have a list of error codes in response to bad input. 

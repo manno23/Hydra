@@ -24,243 +24,101 @@ LINUX: amidi -p <NAME> : creates a virtual midi port if it is not yet already
 
 WINDOWS: BeLoop (torrents - or wherever)
 OSX:
+
+ HydraServer
+
+    Need to seperate concerns of user interface and midi server.
+    Manages phone clients, allowing the sending/receiving of midi messages
+
+    TODO:
+    * Add Logging
+    * Allow user to configure router or have it done automatically
+        - map out the range of possibilites (not plugged in, etc...)
+    * Add gui
+No need to baby user, can create wiki with how to setup virtual
+ports and direct them to the log files that are available to them
+It will not have debug level log, only above.
+
 '''
 
 __version__ = '0.0.1'
 __author__ = 'Jason Manning'
 
-import sys
-import socket
-import struct
-from collections import namedtuple
+import queue
+import threading
+import socketserver
+import pyportmidi
 
-from hydra import midi_handler
-from hydra.commands import *
-
-import logging
-
-sh = logging.StreamHandler(sys.stdout)
-
-log = logging.getLogger('Hydra')
-log.setLevel(logging.DEBUG)
-log.addHandler(sh)
-
-client = namedtuple('client', ['id', 'address', ])
-
-# Midi control messages
-UPDATE_ALL_CLIENTS = 1
-ADD_INSTRUMENT_CLIENT = 2
-REMOVE_INSTRUMENT_CLIENT = 3
-CHANGE_INSTRUMENT_CLIENT = 4
-UPDATE_INSTRUMENT_CLIENT = 5
-
-# Client message types
-CLIENT_CONNECT = 1
-CLIENT_DISCONNECT = 2
-CLIENT_CHECK_CONNECTION = 3
-CLIENT_INSTRUMENT_MESSAGE = 4
-
-# HYDRAHEAD Destination port
-DESTINATION_NET_PORT = 23232
+from . import client_manager
+from . import midi_handler
 
 
-'''
-No need to baby user, can create wiki with how to setup virtual
-ports and direct them to the log files that are available to them
-It will not have debug level log, only above.
-'''
+HYDRA_SERVER_PORT = 5555
 
 
-class ClientManager():
+class HydraServer():
 
-    def __init__(self):
+    def __init__(self, local_address):
+        self.msg_queue = queue.Queue()
+        self.cm = client_manager.ClientManager()
+        self.mh = midi_handler.MidiHandler()
+        self.server = MyServer(local_address,
+                               UDPRequestHandler,
+                               self.msg_queue)
 
-        self._instrument_map = InstrumentMapping()  # Maps the client
-        self._client_list = {}  # Maps the clients ID to it's information
-        self._available_clients = []  # A list of the client ID's that are unassigned
+    def run(self):
 
-        self.midi_handler = midi_handler.MidiHandler()
+        t = threading.Thread(target=self.server.serve_forever)
+        t.daemon = True
+        t.start()
 
-    def handle_message(self, message):
+        pyportmidi.init()
 
-        data = message[0][0]
-        client_address = message[1][0]
-        msg_type, client_id = struct.unpack("!BB", data[0:2])
+        print('\n\n')
+        print('\t _   ___   _____________  ___  ')
+        print('\t| | | \ \ / /  _  \ ___ \/ _ \ ')
+        print('\t| |_| |\ V /| | | | |_/ / /_\ \\')
+        print('\t|  _  | \ / | | | |    /|  _  |')
+        print('\t| | | | | | | |/ /| |\ \| | | |')
+        print('\t\_| |_/ \_/ |___/ \_| \_\_| |_/')
+        print('\n')
+        print('\t          HAS BEGUN...')
+        print('\n\n')
+        print('Ctl-c to exit.')
 
-        log.debug(message)
-        log.debug(client_address)
 
-        if msg_type is CLIENT_CONNECT:
+        # This is the event loop that processes network/midi events
+        while True:
+            try:
+                # Get items off the network queue
+                try:
+                    self.cm.\
+                        handle_message(self.mh,
+                                       self.msg_queue.get(timeout=1/15))
+                except queue.Empty:
+                    pass
 
-            log.info('Confirming connection with client')
-            msg_response_type = struct.pack('B', SERVER_CONFIRM_CONNECT)
-            msg = msg_response_type + self.midi_handler.scene_state()
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.sendto(msg, (client_address, DESTINATION_NET_PORT))
-            sock.close()
+                # Get items from the midi buffer
+                self.cm.handle_midi(self.mh)
 
-            if client_id not in self._client_list:
-                self._client_list[client_id] = client(client_id, client_address)
-                self._available_clients.append(client_id)
-
-        if msg_type is CLIENT_DISCONNECT:
-
-            log.info('Removing client from lists')
-            if client_id in self._client_list:
-                self._client_list.pop(client_id)
-            if client_id in self._available_clients:
-                self._available_clients.remove(client_id)
-            if client_id in self._instrument_map.clients:
-
-                channel_changing_client = self._instrument_map.\
-                    get_channel(client_id)
-                self._instrument_map.remove(client_id)
-
-                if len(self._available_clients) > 0:
-                    # Swap the instrument to another client if any available
-                    selected_client_id = self._available_clients.pop()
-                    self._instrument_map.add(selected_client_id,
-                                             channel_changing_client)
-
-                    # Get state of the instrument to initialise the new client
-                    instr_state = self.midi_handler.\
-                        get_instrument_state(channel_changing_client)
-                    msg = CommandAddInstrument(channel_changing_client,
-                                               instr_state).message
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    sock.sendto(msg,
-                                self._client_list[selected_client_id].address)
-                    sock.close()
-
-        if msg_type is CLIENT_INSTRUMENT_MESSAGE:
-
-            log.info('Handling instrument message')
-            if self.client_id in self._instrument_map.clients:
-                channel = self._instrument_map.get_channel(self.client_id)
-                self.midi_handler.handle_message(channel, data[2:])
-
-    def handle_midi(self):
-        """
-        Constant handling methods here should be universal across the scenes.
-        POV of midi_handler
-        There is never any knowledge of the state of the clients,
-        self.client_manager should handle cases when there are no clients to
-        become active for example
-        """
-        commands = self.midi_handler.poll_midi_events()
-
-        if commands is None or len(self._client_list) is 0:
-            return
-
-        for command in commands:
-
-            if isinstance(command, CommandChangeScene):
-
-                for client_id in self._available_clients:
-                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM).\
-                        sendto(command.message,
-                               (self._client_list[client_id].address,
-                                DESTINATION_NET_PORT))
-
-            elif isinstance(command, CommandUpdateClients):
-
-                for client_id in self._available_clients:
-                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                        sendto(command.message,
-                               (self._client_list[client_id].address,
-                                DESTINATION_NET_PORT))
-
-            elif isinstance(command, CommandAddInstrument):
-
-                if command.channel not in self._instrument_map.channels:
-
-                    selected_client_id = self._available_clients.pop()
-                    self._instrument_map.add(selected_client_id,
-                                             command.channel)
-
-                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                        sendto(command.message,
-                               (self._client_list[selected_client_id].address,
-                                DESTINATION_NET_PORT))
-
-            elif isinstance(command, CommandRemoveInstrument):
-
-                if command.channel in self._instrument_map.channels:
-
-                    deactivating_client_id = \
-                        self._instrument_map.get_client_id(command.channel)
-                    self._instrument_map.remove_channel(command.channel)
-                    self._available_clients.insert(0,
-                                                   deactivating_client_id)
-
-                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                        sendto(command.message,
-                               (self._client_list[deactivating_client_id].address,
-                                DESTINATION_NET_PORT))
-
-            elif isinstance(command, CommandChangeClient):
-
-                if command.channel in self._instrument_map.channels:
-
-                    deactivating_client_id = \
-                        self._instrument_map.get_client_id(command.channel)
-
-                    self._instrument_map.remove_channel(command.channel)
-                    self._available_clients.insert(0,
-                                                   deactivating_client_id)
-
-                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                        sendto(command.remove_message,
-                               (self._client_list[deactivating_client_id].address,
-                                DESTINATION_NET_PORT))
-
-                else:
-
-                    selected_client_id = self._available_clients.pop()
-                    self._instrument_map.add(selected_client_id,
-                                             command.channel)
-
-                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                        sendto(command.add_message,
-                               (self._client_list[selected_client_id].address,
-                                DESTINATION_NET_PORT))
-
-            elif isinstance(command, CommandUpdateInstrument):
-
-                if command.channel in self._instrument_map.channels:
-                    client_id = \
-                        self._instrument_map.get_client_id(command.channel)
-                    socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                        sendto(command.message, (self._client_list[client_id].address,
-                                                 DESTINATION_NET_PORT))
+            except KeyboardInterrupt:
+                break
 
     def close(self):
-        self._client_list = {}
-        self._available_clients = []
-        self._instrument_map.channels = {}
-        self._instrument_map.clients = {}
+        self.server.server_close()
+        self.server.shutdown()
+        self.cm.close()
+        pyportmidi.quit()
 
 
-class InstrumentMapping():
-    def __init__(self):
-        self.channels = {}
-        self.clients = {}
+class UDPRequestHandler(socketserver.ThreadingMixIn,
+                        socketserver.DatagramRequestHandler):
+    def handle(self):
+        self.server.msg_queue.put_nowait((self.request, self.client_address))
 
-    def add(self, client_id, channel):
-        self.channels[channel] = client_id
-        self.clients[client_id] = channel
 
-    def get_channel(self, client_id):
-        return self.clients[client_id]
-
-    def get_client_id(self, channel):
-        return self.channels[channel]
-
-    def remove_channel(self, channel):
-        client_id = self.channels.pop(channel)
-        self.clients.pop(client_id)
-
-    def remove_client_id(self, client_id):
-        channel = self.clients.pop(client_id)
-        self.channels.pop(channel)
-
+class MyServer(socketserver.UDPServer):
+    def __init__(self, *args, **kwargs):
+        socketserver.UDPServer.__init__(self, *args, **kwargs)
+        self.allow_reuse_address = True
+        self.msg_queue = args[2]

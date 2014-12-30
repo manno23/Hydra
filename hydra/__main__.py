@@ -1,27 +1,23 @@
 """
 The basic way to run the application is just to call the package
-with python.
+with python. (It must be installed through setup.py because pyportmidi
+must be compiled.)
 
 """
 
 import os
-import argparse
+import sys
+import configparser
 import importlib
+
+from hydra import config
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-c', '--config',
-        metavar='path_to_config_dir',
-        default="config",
-        help="Directory containing our hydra.conf")
-
-    args = parser.parse_args()
 
     # Check all our dependencies have been met
     import_fail = False
-    for module in ['requests']:
+    for module in ['netifaces', 'pyportmidi']:
         try:
             importlib.import_module(module)
         except ImportError:
@@ -29,31 +25,33 @@ def main():
             print(('Fatal Error: Unable to find the dependency {}')
                   .format(module))
     if import_fail:
-        print("Install all dependencies by running: "
-              "pip3 install -r requirement.txt")
-        exit()
+        print("Install all dependencies by running:\
+               'pip3 install -r requirements.txt'")
+        sys.exit()
 
-    # Check if configuration directory exists
-    config_dir = os.path.join(os.getcwd(), args.config)
-    if not os.path.isdir(config_dir):
-        print(('Fatal Error: Unable to find specified configuration '
-              'directory {}').format(config_dir))
-        exit()
-    config_path = os.path.join(config_dir, 'hydra.conf')
+    CONFIG_FILE_NAME = '.hydra'
+    home_dir = os.path.expanduser('~')
+    config_path = os.path.join(home_dir, CONFIG_FILE_NAME)
+    conf = configparser.ConfigParser()
 
-    # If no config file exists, create a default
+    # Check if configuration directory exists - this should really
+    # not be a problem.
+    if not os.path.isdir(home_dir):
+        print('Fatal Error: Unable to find a home directory to place\
+                configuration file in.')
+        sys.exit()
+
+    # If no config file exists, determine settings and create one
     if not os.path.isfile(config_path):
-        try:
-            with open(config_path, 'w') as conf:
-                conf.write("This is the new config file for Hydra!")
-        except IOError:
-            print(('Fatal Error: Unable to create new config file '
-                  'to the path {}').format(config_path))
-            exit()
+
+        # We will need to manually configure as well as provide the defaults
+        config.create_config(conf)
+        with open(config_path, 'w') as config_file:
+            conf.write(config_file)
 
     # Create new instance of the server
     hydra_server = config.from_config_file(config_path)
-
+    hydra_server.run()
 
 
 if __name__ == "__main__":

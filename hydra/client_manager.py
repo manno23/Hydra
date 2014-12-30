@@ -26,16 +26,20 @@ WINDOWS: BeLoop (torrents - or wherever)
 OSX:
 '''
 
-__version__ = '0.0.1'
-__author__ = 'Jason Manning'
-
 import sys
 import socket
 import struct
 from collections import namedtuple
 
-from hydra import midi_handler
-from hydra.commands import *
+from hydra.commands import (
+    SERVER_CONFIRM_CONNECT,
+    CommandChangeScene,
+    CommandUpdateClients,
+    CommandAddInstrument,
+    CommandRemoveInstrument,
+    CommandChangeClient,
+    CommandUpdateInstrument
+    )
 
 import logging
 
@@ -64,24 +68,15 @@ CLIENT_INSTRUMENT_MESSAGE = 4
 DESTINATION_NET_PORT = 23232
 
 
-'''
-No need to baby user, can create wiki with how to setup virtual
-ports and direct them to the log files that are available to them
-It will not have debug level log, only above.
-'''
-
-
 class ClientManager():
 
     def __init__(self):
 
         self._instrument_map = InstrumentMapping()  # Maps the client
         self._client_list = {}  # Maps the clients ID to it's information
-        self._available_clients = []  # A list of the client ID's that are unassigned
+        self._available_clients = []  # list of unassigned client IDs
 
-        self.midi_handler = midi_handler.MidiHandler()
-
-    def handle_message(self, message):
+    def handle_message(self, mh, message):
 
         data = message[0][0]
         client_address = message[1][0]
@@ -94,13 +89,14 @@ class ClientManager():
 
             log.info('Confirming connection with client')
             msg_response_type = struct.pack('B', SERVER_CONFIRM_CONNECT)
-            msg = msg_response_type + self.midi_handler.scene_state()
+            msg = msg_response_type + mh.scene_state()
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.sendto(msg, (client_address, DESTINATION_NET_PORT))
             sock.close()
 
             if client_id not in self._client_list:
-                self._client_list[client_id] = client(client_id, client_address)
+                self._client_list[client_id] = client(client_id,
+                                                      client_address)
                 self._available_clients.append(client_id)
 
         if msg_type is CLIENT_DISCONNECT:
@@ -123,7 +119,7 @@ class ClientManager():
                                              channel_changing_client)
 
                     # Get state of the instrument to initialise the new client
-                    instr_state = self.midi_handler.\
+                    instr_state = mh.\
                         get_instrument_state(channel_changing_client)
                     msg = CommandAddInstrument(channel_changing_client,
                                                instr_state).message
@@ -137,9 +133,9 @@ class ClientManager():
             log.info('Handling instrument message')
             if self.client_id in self._instrument_map.clients:
                 channel = self._instrument_map.get_channel(self.client_id)
-                self.midi_handler.handle_message(channel, data[2:])
+                mh.handle_message(channel, data[2:])
 
-    def handle_midi(self):
+    def handle_midi(self, mh):
         """
         Constant handling methods here should be universal across the scenes.
         POV of midi_handler
@@ -147,7 +143,7 @@ class ClientManager():
         self.client_manager should handle cases when there are no clients to
         become active for example
         """
-        commands = self.midi_handler.poll_midi_events()
+        commands = mh.poll_midi_events()
 
         if commands is None or len(self._client_list) is 0:
             return
@@ -195,7 +191,8 @@ class ClientManager():
 
                     socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
                         sendto(command.message,
-                               (self._client_list[deactivating_client_id].address,
+                               (self._client_list[deactivating_client_id]
+                                   .address,
                                 DESTINATION_NET_PORT))
 
             elif isinstance(command, CommandChangeClient):
@@ -211,7 +208,8 @@ class ClientManager():
 
                     socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
                         sendto(command.remove_message,
-                               (self._client_list[deactivating_client_id].address,
+                               (self._client_list[deactivating_client_id]
+                                   .address,
                                 DESTINATION_NET_PORT))
 
                 else:
@@ -231,7 +229,8 @@ class ClientManager():
                     client_id = \
                         self._instrument_map.get_client_id(command.channel)
                     socket.socket(socket.AF_INET, socket.SOCK_DGRAM). \
-                        sendto(command.message, (self._client_list[client_id].address,
+                        sendto(command.message, (self._client_list[client_id]
+                                                 .address,
                                                  DESTINATION_NET_PORT))
 
     def close(self):
@@ -263,4 +262,3 @@ class InstrumentMapping():
     def remove_client_id(self, client_id):
         channel = self.clients.pop(client_id)
         self.channels.pop(channel)
-

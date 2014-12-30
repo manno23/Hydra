@@ -24,8 +24,7 @@ LINUX: amidi -p <NAME> : creates a virtual midi port if it is not yet already
 
 WINDOWS: BeLoop (torrents - or wherever)
 OSX:
-'''
-'''
+
  HydraServer
 
     Need to seperate concerns of user interface and midi server.
@@ -36,8 +35,12 @@ OSX:
     * Allow user to configure router or have it done automatically
         - map out the range of possibilites (not plugged in, etc...)
     * Add gui
+No need to baby user, can create wiki with how to setup virtual
+ports and direct them to the log files that are available to them
+It will not have debug level log, only above.
 
 '''
+
 __version__ = '0.0.1'
 __author__ = 'Jason Manning'
 
@@ -57,6 +60,8 @@ class HydraServer():
 
     def __init__(self, local_address):
         self.msg_queue = queue.Queue()
+        self.cm = client_manager.ClientManager()
+        self.mh = midi_handler.MidiHandler()
         self.server = MyServer(local_address,
                                UDPRequestHandler,
                                self.msg_queue)
@@ -68,20 +73,33 @@ class HydraServer():
         t.start()
 
         pyportmidi.init()
-        midi_object = midi_handler.MidiHandler()
 
+        print('\n\n')
+        print('\t _   ___   _____________  ___  ')
+        print('\t| | | \ \ / /  _  \ ___ \/ _ \ ')
+        print('\t| |_| |\ V /| | | | |_/ / /_\ \\')
+        print('\t|  _  | \ / | | | |    /|  _  |')
+        print('\t| | | | | | | |/ /| |\ \| | | |')
+        print('\t\_| |_/ \_/ |___/ \_| \_\_| |_/')
+        print('\n')
+        print('\t          HAS BEGUN...')
+        print('\n\n')
+        print('Ctl-c to exit.')
+
+
+        # This is the event loop that processes network/midi events
         while True:
             try:
                 # Get items off the network queue
                 try:
-                    client_manager.\
-                        handle_message(midi_object,
+                    self.cm.\
+                        handle_message(self.mh,
                                        self.msg_queue.get(timeout=1/15))
                 except queue.Empty:
                     pass
 
                 # Get items from the midi buffer
-                client_manager.handle_midi(midi_object)
+                self.cm.handle_midi(self.mh)
 
             except KeyboardInterrupt:
                 break
@@ -89,7 +107,8 @@ class HydraServer():
     def close(self):
         self.server.server_close()
         self.server.shutdown()
-        client_manager.close()
+        self.cm.close()
+        pyportmidi.quit()
 
 
 class UDPRequestHandler(socketserver.ThreadingMixIn,

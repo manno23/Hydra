@@ -41,25 +41,13 @@ def main():
                 configuration file in.')
         sys.exit()
 
-    # If no config file exists, determine settings
+    # If no config file exists, determine settings and create one
     if not os.path.isfile(config_path):
+
         # We will need to manually configure as well as provide the defaults
-        print('Creating the new config file')
-        conf['NETWORKING'] = {
-            'local_address': 'ask user for this value',
-            'local_port': '5555',
-            }
+        config.create_config(conf)
         with open(config_path, 'w') as config_file:
-            print('Writing the new config file')
             conf.write(config_file)
-    else:
-        # We can load the configuration into a
-        # dictionary of values
-        print('Grabbing values from the configuration file')
-        with open(config_path, 'r') as config_file:
-            conf.readfp(config_file)
-            for section in conf.sections():
-                    print(conf[section])
 
     # Create new instance of the server
     hydra_server = config.from_config_file(config_path)

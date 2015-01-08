@@ -51,14 +51,14 @@ log.addHandler(sh)
 
 client = namedtuple('client', ['id', 'address', ])
 
-# Midi control messages
+# Types of message received from the midi ports
 UPDATE_ALL_CLIENTS = 1
 ADD_INSTRUMENT_CLIENT = 2
 REMOVE_INSTRUMENT_CLIENT = 3
 CHANGE_INSTRUMENT_CLIENT = 4
 UPDATE_INSTRUMENT_CLIENT = 5
 
-# Client message types
+# Types of message received from the client
 CLIENT_CONNECT = 1
 CLIENT_DISCONNECT = 2
 CLIENT_CHECK_CONNECTION = 3
@@ -76,22 +76,24 @@ class ClientManager():
         self._client_list = {}  # Maps the clients ID to it's information
         self._available_clients = []  # list of unassigned client IDs
 
-    def handle_message(self, mh, message):
+    def handle_message(self, mh, raw_msg):
 
-        data = message[0][0]
-        client_address = message[1][0]
-        msg_type, client_id = struct.unpack("!BB", data[0:2])
+        msg_body = raw_msg[0][0]
+        client_address = raw_msg[1][0]
 
-        log.debug(message)
-        log.debug(client_address)
+        msg_type, client_id = \
+            struct.unpack("!BB", msg_body[0:2])
+        msg_content = msg_body[2:]
 
         if msg_type is CLIENT_CONNECT:
 
-            log.info('Confirming connection with client')
+            log.info('Adding client %s' % client_id)
             msg_response_type = struct.pack('B', SERVER_CONFIRM_CONNECT)
-            msg = msg_response_type + mh.scene_state()
+
+            # Sending msg response back
+            response = msg_response_type + mh.scene_state()
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.sendto(msg, (client_address, DESTINATION_NET_PORT))
+            sock.sendto(response, (client_address, DESTINATION_NET_PORT))
             sock.close()
 
             if client_id not in self._client_list:
@@ -110,7 +112,7 @@ class ClientManager():
 
                 channel_changing_client = self._instrument_map.\
                     get_channel(client_id)
-                self._instrument_map.remove(client_id)
+                self._instrument_map.remove_client_id(client_id)
 
                 if len(self._available_clients) > 0:
                     # Swap the instrument to another client if any available
@@ -130,10 +132,9 @@ class ClientManager():
 
         if msg_type is CLIENT_INSTRUMENT_MESSAGE:
 
-            log.info('Handling instrument message')
-            if self.client_id in self._instrument_map.clients:
-                channel = self._instrument_map.get_channel(self.client_id)
-                mh.handle_message(channel, data[2:])
+            if client_id in self._instrument_map.clients:
+                channel = self._instrument_map.get_channel(client_id)
+                mh.handle_message(channel, msg_content)
 
     def handle_midi(self, mh):
         """
@@ -238,7 +239,6 @@ class ClientManager():
         self._available_clients = []
         self._instrument_map.channels = {}
         self._instrument_map.clients = {}
-
 
 class InstrumentMapping():
     def __init__(self):

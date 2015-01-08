@@ -53,9 +53,6 @@ from . import client_manager
 from . import midi_handler
 
 
-HYDRA_SERVER_PORT = 5555
-
-
 class HydraServer():
 
     def __init__(self, local_address):
@@ -92,9 +89,8 @@ class HydraServer():
             try:
                 # Get items off the network queue
                 try:
-                    self.cm.\
-                        handle_message(self.mh,
-                                       self.msg_queue.get(timeout=1/15))
+                    msg = self.msg_queue.get(timeout=1/15)
+                    self.cm.handle_message(self.mh, msg)
                 except queue.Empty:
                     pass
 

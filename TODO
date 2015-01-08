@@ -34,8 +34,26 @@ that must be accessible to both of
 	handle_message
 	handle_midi
 
+CONFIG
+local-address
+local-port
+logging: on/off
+midi-port configurations
+    number of ports (16 channels per port)
+
 
 SERVICE API
 To allow for people to build there own clients to connect to hydra, a 
 good api is needed. 
-It should have a list of error codes in response to bad input. 
+It should have a list of error codes in response to bad input.
+
+
+URGENT TODO
+automatically configure ports. There is a midi ouptut port in the
+midi_handler that is setup purely for testing and is not needed otherwise.
+Automatic should be fine though we may need to add options to the configuration
+for manual setup.
+
+- Investigate communication security.
+Need to establish legitimate identity of the clients to prevent
+other network messages being targeted at the server.

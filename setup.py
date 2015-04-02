@@ -34,4 +34,4 @@ PACKAGEDATA = {
 PACKAGEDATA.update(METADATA)
 
 
-setup(**PACKAGEDATA)
+setup(**PACKAGEDATA, requires=['netifaces'])

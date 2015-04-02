@@ -2,6 +2,31 @@ import sys
 import hydra
 import netifaces
 import configparser
+import os.path
+
+
+def get_hydra_instance(*hydra_opts):
+    CONFIG_FILE_NAME = '.hydra'
+    home_dir = os.path.expanduser('~')
+    config_path = os.path.join(home_dir, CONFIG_FILE_NAME)
+    conf = configparser.ConfigParser()
+
+    # Check if configuration directory exists - this should really
+    # not be a problem.
+    if not os.path.isdir(home_dir):
+        print('Fatal Error: Unable to find a home directory to place\
+                    configuration file in.')
+        sys.exit()
+
+    # If no config file exists, determine settings and create one
+    if not os.path.isfile(config_path):
+
+        # We will need to manually configure as well as provide the defaults
+        create_config(conf)
+        with open(config_path, 'w') as config_file:
+            conf.write(config_file)
+
+    from_config_file(config_file)
 
 
 def from_config_dict(config):
@@ -47,6 +72,12 @@ def create_config(config):
     config.add_section('NETWORK')
     config['NETWORK']['local_address'] = _get_address()
     config['NETWORK']['local_port'] = '5555'
+
+
+def get_config_dir():
+    """
+    :return: str path
+    """
 
 
 def _get_address():

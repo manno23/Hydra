@@ -29,28 +29,9 @@ def main():
                'pip3 install -r requirements.txt'")
         sys.exit()
 
-    CONFIG_FILE_NAME = '.hydra'
-    home_dir = os.path.expanduser('~')
-    config_path = os.path.join(home_dir, CONFIG_FILE_NAME)
-    conf = configparser.ConfigParser()
-
-    # Check if configuration directory exists - this should really
-    # not be a problem.
-    if not os.path.isdir(home_dir):
-        print('Fatal Error: Unable to find a home directory to place\
-                configuration file in.')
-        sys.exit()
-
-    # If no config file exists, determine settings and create one
-    if not os.path.isfile(config_path):
-
-        # We will need to manually configure as well as provide the defaults
-        config.create_config(conf)
-        with open(config_path, 'w') as config_file:
-            conf.write(config_file)
 
     # Create new instance of the server
-    hydra_server = config.from_config_file(config_path)
+    hydra_server = config.get_hydra_instance()
     hydra_server.run()
 
 

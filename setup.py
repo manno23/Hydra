@@ -30,8 +30,9 @@ if "bdist_msi" in sys.argv:
 
 PACKAGEDATA = {
     'packages': ['hydra'],
+    'requires': ['netifaces', 'pypm']
 }
 PACKAGEDATA.update(METADATA)
 
 
-setup(**PACKAGEDATA, requires=['netifaces'])
+setup(**PACKAGEDATA)

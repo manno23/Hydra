@@ -5,31 +5,57 @@ import configparser
 import os.path
 
 
-class Configuration(object):
+class Config(object):
     """
 A singleton, ensure only one is implemented through the interface,
 (ie. creation calls are idempotent).
     """
-    properties = {}
+    CONFIG_FILE_NAME = '.hydra'
 
-    def __init__(self):
+    _config = {}
+
+    def __init__(self, options):
+
+        home_dir = os.path.expanduser('~')
+        # Check if configuration directory exists - this should really
+        # not be a problem.
+        if not os.path.isdir(home_dir):
+            print('Fatal Error: Unable to find a home directory to place\
+                        configuration file in.')
+            sys.exit()
+
+        self.config_path = os.path.join(home_dir, self.CONFIG_FILE_NAME)
+        self.conf = configparser.ConfigParser()
+
+        self.conf.add_section('NETWORK')
+        self.conf['NETWORK']['local_address'] = _get_address()
+        self.conf['NETWORK']['local_port'] = '5555'
+
+    def __contains__(self, item):
+        return item in self._config
+
+    def load(self):
+        pass
+
+    def save(self):
         pass
 
 
 _config = None
 
-def get_hydra_instance(*hydra_opts):
-    CONFIG_FILE_NAME = '.hydra'
-    home_dir = os.path.expanduser('~')
-    config_path = os.path.join(home_dir, CONFIG_FILE_NAME)
-    conf = configparser.ConfigParser()
+def create_config(options):
+    if _config is None:
+        _config = Configuration(options)
+    """
+    Guides the user through creating the correct configuration.
 
-    # Check if configuration directory exists - this should really
-    # not be a problem.
-    if not os.path.isdir(home_dir):
-        print('Fatal Error: Unable to find a home directory to place\
-                    configuration file in.')
-        sys.exit()
+    """
+
+
+def get_config():
+
+
+def get_hydra_instance(*hydra_opts):
 
     # If no config file exists, determine settings and create one
     if not os.path.isfile(config_path):
@@ -51,8 +77,6 @@ def from_config_dict(config):
         int(config['NETWORK']['local_port'])
     )
     print(local_address)
-    hydra_server = hydra.HydraServer(local_address)
-    return hydra_server
 
 
 def from_config_file(config_path, hydra_server=None):
@@ -74,16 +98,6 @@ def from_config_file(config_path, hydra_server=None):
             config_dict[section][key] = val
 
     return from_config_dict(config_dict)
-
-
-def create_config(config):
-    """
-    Guides the user through creating the correct configuration.
-
-    """
-    config.add_section('NETWORK')
-    config['NETWORK']['local_address'] = _get_address()
-    config['NETWORK']['local_port'] = '5555'
 
 
 def get_config_dir(filename):

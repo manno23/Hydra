@@ -14,7 +14,7 @@ def start_daemon():
     # Check all our dependencies have been met
     # TODO Do we need to check the requirements here? This should be handled in installation
     import_fail = False
-    for module in ['netifaces', 'pyportmidi']:
+    for module in ['netifaces', 'pypm']:
         try:
             importlib.import_module(module)
         except ImportError:
@@ -49,8 +49,9 @@ def start_daemon():
     # Get the options and args from the OptionParser
     (options, args) = parser.parse_args()
 
-    # Setup the logger
-    log.initialise(options)
+    # Setup the logger and configuration
+    logger = log.initialise(options)
+    configuration = config.get_config(options)
 
     if options.config:
         try:

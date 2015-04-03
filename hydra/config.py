@@ -5,6 +5,19 @@ import configparser
 import os.path
 
 
+class Configuration(object):
+    """
+A singleton, ensure only one is implemented through the interface,
+(ie. creation calls are idempotent).
+    """
+    properties = {}
+
+    def __init__(self):
+        pass
+
+
+_config = None
+
 def get_hydra_instance(*hydra_opts):
     CONFIG_FILE_NAME = '.hydra'
     home_dir = os.path.expanduser('~')
@@ -20,7 +33,6 @@ def get_hydra_instance(*hydra_opts):
 
     # If no config file exists, determine settings and create one
     if not os.path.isfile(config_path):
-
         # We will need to manually configure as well as provide the defaults
         create_config(conf)
         with open(config_path, 'w') as config_file:
@@ -37,7 +49,7 @@ def from_config_dict(config):
     local_address = (
         config['NETWORK']['local_address'],
         int(config['NETWORK']['local_port'])
-        )
+    )
     print(local_address)
     hydra_server = hydra.HydraServer(local_address)
     return hydra_server
@@ -74,10 +86,8 @@ def create_config(config):
     config['NETWORK']['local_port'] = '5555'
 
 
-def get_config_dir():
-    """
-    :return: str path
-    """
+def get_config_dir(filename):
+    return os.path.join(_config.path)
 
 
 def _get_address():

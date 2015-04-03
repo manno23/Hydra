@@ -1,0 +1,7 @@
+#!/bin/python
+"""
+A Gtk GUI is launched alongside and connects to the hydrad daemon.
+It first checks to see if the repositories are available, if not instructions are
+given on how to fulfill the dependencies.
+Namely pygobject and the Gtk libraries.
+"""

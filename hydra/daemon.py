@@ -2,6 +2,8 @@ __author__ = 'jm'
 
 import hydra.config
 import os.path
+from hydra.rpcserver import RPCServer
+from hydra.core import Core
 
 class Daemon(object):
     """
